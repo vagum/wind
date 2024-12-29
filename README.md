@@ -1,5 +1,9 @@
 ## Laravel Wind Lessons
 
+ветка второго репозитория с клиентом
+
+https://github.com/vagum/windclient
+
 ================ 12 Log Exceptions =====================
 
 Временные метки по видео предыдущего урока:
