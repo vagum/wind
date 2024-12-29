@@ -4,6 +4,10 @@
 
 https://github.com/vagum/windclient
 
+ссылка для импорта постман коллекции
+
+https://github.com/vagum/wind/blob/main/Wind.postman_collection.json
+
 ================ 12 Log Exceptions =====================
 
 Временные метки по видео предыдущего урока:
