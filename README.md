@@ -8,7 +8,186 @@ https://github.com/vagum/windclient
 
 https://github.com/vagum/wind/blob/main/Wind.postman_collection.json
 
-================ 12 Log Exceptions =====================
+
+============== 16 storage image ==========
+
+Всё в старом проекте wind!
+
+Временные метки по видео предыдущего урока:
+```
+08.51 Добавление в контроллер выборку категорий для создания поста
+10.11 Добавляем в шаблон input type для селекта с категориями
+12.37 v-model у селекта в шаблоне
+13.20 инициализация в шаблоне в data category_id: null,
+13.51 прописываем в Posts/StoreRequest.php 'category_id' => 'nullable|integer|exists:categories,id'
+15.19 поймали категорию
+15.37 исправляем то что после отсылки формы, сбросилась надпись "Выберите категорию"
+18.03 прокидываем картинку
+18.41 файлу нельзя назначать v-model - удаляем
+19.24 что нужно сделать чтобы картинка долетела на бэк
+19.57 записываем в data() image: null
+20.10 добавляем метод setImage в methods в шаблоне vue
+20.22 прописываем у ссылки @change="setImage"
+21.59 console.log(e.target.files[0]);
+23.23 прописываем в setImage(e) this.post.image = e.target.files[0];
+23.55 дописываем в Posts/StoreRequest 'image' => 'nullable|file',
+24.21 в PostController смотри dd($data)
+25.35 чтобы не ругалось на Image добавляем в methods: хедер 'Content-Type': 'multipart/form-data'
+28.34 про диски и Storage, где это задается в конфиге config/filesystems.php
+28.44 указываем куда сохранять картинку в PostController Storage::disk('public')->put('/images', $data['image']);
+30.06 прописываем в PostController unset($data['image']); иначе всё упадет
+30.17 'image_path' в PostResource.php у меня уже прописано, не прописываю
+31.01 запускаем создание поста с картинкой
+34.33 добавляем отображение картинки в Posts/Show.vue
+35.37 заходим в модель Post и делаем геттер getImageUrlAttribute для отображения ссылки
+37.45 исправляем имя домена в .env на http://127.0.0.1:8000
+38.35 делаем правки в PostResource и меняем image_path на 'image_url' => $this->image_url,
+39.27 в Post/Show.vue прописываем <img :src="post.image_url" />
+40.06 делаем симлинк php artisan storage:link
+42.28 отображение Success для успешно добавленного поста в Create.vue
+43.07 добавление атрибута в data() isSuccess
+44.19 обнуление поля file в форме
+45.23 прописываем в Create.vue ref="image_input" у поля загрузки картинки
+46.30 смотрим console.log(this.$refs.image_input) в setImage
+46.53 обнуляем this.$refs.image_input.value = null
+49.36 multiple для выбора нескольких файлов
+50.53 в Post/StoreRequest.php метод passedValidation для добавления дополнительных данных в массив
+валидированных данных.
+52.04 исправляем в PostController $request->validationData()
+52.44 переносим данные из PostController в Post/StoreRequest
+54.16 сеньерская задача
+```
+
+Что сделано по уроку:
+1) Всё что в уроке
+2) в StoreRequest добавил удаление image с повторной валидацией
+3) добавил универсальную загрузку полей селект и имаджей
+
+============ 15 vue store create show =============
+
+Всё в старом проекте wind!
+
+Временные метки по видео предыдущего урока:
+```
+13.15 Laravel Layouts
+13.34 Создаём лайаут в resources/js/layouts/Admin/AdminLayout.vue
+15.42 Топ 3 крокодильих слёз в resources/js/Pages/Index.vue вставился сам четко
+с расширением .vue вот тут import AdminLayout from "@/Layouts/Admin/AdminLayout.vue";
+подозреваю что из-за того, что сделал подкаталог /Admin/ в Layouts
+18.51 Вставляем tailwind табличку для постов
+24.11 Вставляем ссылку на просмотр поста в Post/Index.vue
+25.11 Импорт import { Link } from "@inertiajs/vue3";
+27.16 Редактирование routes/admin.php для ->name('admin.posts.index');
+27.35 Добавление роута и ->name('admin.posts.show');
+28.36 Добавляем в Admin/PostController.php метод show
+37.35 делаем кнопку Create Post
+38.10 PostController метод create
+45.42 Отправляем форму на бэк с помощью v-model
+49.37 создаем реквест php artisan make:request Admin/Post/StoreRequest
+53.29 отправляем данные на бэкэнд с помощью axios
+56.13 Добавляем в роут метод для метода post
+56.32 отправляем форму на бэк
+58.48 редактируем PostController метод store
+01.00.30 очистка формы this.post = {};
+01.01.46 https://inertiajs.com/forms
+01.03.01 редирект в PostController на урл после сохранения формы
+```
+
+смотреть тут:
+http://127.0.0.1:8000/admin/users
+
+1) Чтобы посмотреть что сделано запускаем в разных консолях
+   php artisan serve
+   vite
+2) Сделаны сокращенные роутинги в /routes/admin.php
+   php artisan route:list
+3) Сделаны универсальные ResourceIndex, ResourceShow, ResourceCreate в /resources/js/Pages/Admin/All
+   Для форм создания сущностей использовалось
+   https://inertiajs.com/forms
+4) Сделаны для всех сущностей наполнители соответствующие в /resources/js/Pages/Admin/
+   в соответствующих каталогах
+5) Сделаны контроллеры в /Admin
+6) Поправил реквесты
+
+============== 14 vue inertia =======
+
+Всё в старом проекте wind!
+
+Устанавливаем Node.JS с сайта
+https://nodejs.org/en/download
+затем
+npm install -g vite
+перезапускаем phpstorm и пользуемся.
+
+Временные метки по видео предыдущего урока:
+```
+11.55 composer require laravel/breeze --dev
+12.35 php artisan breeze:install vue
+13.10 Toп 1 крокодильих слёз "Про то что Vue всё затирает в routes/web.php"
+13.48 Toп 1 крокодильих слёз "Про то что Vue всё затирает в app/Providers/AppServiceProvider.php"
+14.14 php artisan serve и вторым окном просто vite
+15.45 Vue.js DevTools
+28.10 Настройки resources/js/app.js (шаблон титла страниц, пути до шаблонов на Vue и т.д.)
+33.33 resources/js/Pages/Auth/Login.vue
+36.35 routes/admin.php
+38.03 php artisan make:controller Admin/PostController
+40.17 в PostController.php return inertia('Admin/Post/Index');
+40.40 место где указывается в resources/js/app.js путь до папки Pages . чтобы брать Admin/Post/Index
+42.40 прокидываем из базы посты через PostController во vue
+50.42 в /Post/Index.vue export props
+52.56 в Index.vue пишем для дива v-for цикл для отображения постов на странице
+53.32 в Index.vue {{ post.title }}
+```
+
+Вопросы:
+1) При создании Vue Component, есть выбор Options API или Composition API. Первое по умолчанию.
+   В чем разница и на что влияет ? Внутри одинаково.
+
+Что сделано:
+http://127.0.0.1:8000/admin/categories
+http://127.0.0.1:8000/admin/comments
+http://127.0.0.1:8000/admin/posts
+http://127.0.0.1:8000/admin/profiles
+http://127.0.0.1:8000/admin/roles
+http://127.0.0.1:8000/admin/tags
+http://127.0.0.1:8000/admin/users
+
+============= 13 Http Client Config Env ========
+
+Всё в новом проекте wind_client!
+
+```
+9.31 composer create-project laravel/laravel wind_client
+11.31 php artisan make:model Post -m
+12.06 Исправление миграции Post
+12.16 php artisan migrate
+12.20 подключение sqlite
+12.52 php artisan make:command GoCommand
+14.45 хттп клиент Http::get
+15.24 php artisan go
+17.20 GoCommand пишем полученное в базу Post::firstOrCreate
+17.36 Исправляем ошибку делая правки в Post.php protected $guarded = false
+18.35 php artisan make:class HttpClients/PostHttpClient
+20.06 PostHttpClient
+21.45 php artisan go
+22.33 включение аутентификации в api.php через миддлвар
+22.58 смотрим в GoCommand ->status
+25.17 PostHttpClient метод login
+26.23 GoCommand PostHttpClient::login
+26.58 GoCommand access_token
+27.55 GoCommand token
+28.15 PostHttpClient Http::withToken()
+28.35 php artisan go
+33.17 фабрика make в PostHttpClient
+35.21 GoCommand PostHttpClient::make()->login()->index()->collect()
+40.06 login + pass в .env
+42.34 пароль в конфиг
+46.59 фильтр withQueryParameters()
+```
+
+Сделал два файла PostHttpClient и GoCommand
+
+================ 12 Log Exceptions ===========
 
 Временные метки по видео предыдущего урока:
 ```
