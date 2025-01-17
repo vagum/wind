@@ -144,13 +144,21 @@ npm install -g vite
    В чем разница и на что влияет ? Внутри одинаково.
 
 Что сделано:
+
 http://127.0.0.1:8000/admin/categories
+
 http://127.0.0.1:8000/admin/comments
+
 http://127.0.0.1:8000/admin/posts
+
 http://127.0.0.1:8000/admin/profiles
+
 http://127.0.0.1:8000/admin/roles
+
 http://127.0.0.1:8000/admin/tags
+
 http://127.0.0.1:8000/admin/users
+
 
 ============= 13 Http Client Config Env ========
 
