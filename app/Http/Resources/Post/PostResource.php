@@ -23,13 +23,13 @@ class PostResource extends JsonResource
             'title' => $this->title,
             'content' => $this->content,
             'description' => $this->description,
-            'image_path' => $this->image_path,
             'published_at' => $this->published_at,
             'views' => $this->viewedProfiles()->count(), // Подсчет просмотров,
             'likes' => $this->likedProfiles()->count(), // Подсчет лайков,
             'category_title' => CategoryResource::make($this->category)->resolve()['title'],
             'profile_name' => ProfileResource::make($this->profile)->resolve(),
             'tags_title' => $this->tags->pluck('title'),
+            'image_url' => $this->image_url,
         ];
     }
 }

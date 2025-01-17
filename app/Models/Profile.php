@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Support\Facades\Storage;
 
 class Profile extends Model
 {
@@ -45,6 +46,11 @@ class Profile extends Model
     public function image()
     {
         return $this->morphOne(Image::class, 'imageable');
+    }
+
+    public function getImageUrlAttribute(): string
+    {
+        return Storage::disk('public')->url($this->avatar);
     }
 
 }

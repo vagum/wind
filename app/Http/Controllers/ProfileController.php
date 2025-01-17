@@ -2,55 +2,62 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Profile;
+use App\Http\Requests\ProfileUpdateRequest;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    public function index()
+    /**
+     * Display the user's profile form.
+     */
+    public function edit(Request $request): Response
     {
-        return Profile::all();
+        return Inertia::render('Profile/Edit', [
+            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'status' => session('status'),
+        ]);
     }
 
-    public function show(Profile $profile)
+    /**
+     * Update the user's profile information.
+     */
+    public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        return $profile;
+        $request->user()->fill($request->validated());
+
+        if ($request->user()->isDirty('email')) {
+            $request->user()->email_verified_at = null;
+        }
+
+        $request->user()->save();
+
+        return Redirect::route('profile.edit');
     }
 
-    public function store()
+    /**
+     * Delete the user's account.
+     */
+    public function destroy(Request $request): RedirectResponse
     {
-        $profileData = [
-            'user_id' => 1,
-            'login' => 'NickName',
-            'address' => 'Some Address',
-            'phone' => '+19094892340091',
-            'avatar' => 'avatar.jpg',
-            'description' => 'Some description',
-            'gender' => 'Male',
-            'birthed_at' => '2001-12-31',
-        ];
+        $request->validate([
+            'password' => ['required', 'current_password'],
+        ]);
 
-        return Profile::create($profileData);
-    }
+        $user = $request->user();
 
-    public function update(Profile $profile)
-    {
-        $profileData = [
-            'login' => 'NickName Edited',
-            'address' => 'Some Address Edited',
-            'phone' => '+233245665768678769',
-        ];
+        Auth::logout();
 
-        $profile->update($profileData);
+        $user->delete();
 
-        return $profile;
-    }
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-    public function destroy(Profile $profile)
-    {
-
-        $profile->delete();
-
-        return response(['message' => 'Profile has been deleted']);
+        return Redirect::to('/');
     }
 }

@@ -2,11 +2,8 @@
 
 namespace App\Providers;
 
-use App\Events\Post\StoredPostEvent;
-use App\Listeners\Post\SendNotifyListener;
-use App\Listeners\Post\WriteLogListener;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,5 +22,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Model::unguard();
+        Vite::prefetch(concurrency: 3);
     }
 }

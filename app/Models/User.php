@@ -7,6 +7,7 @@ use App\Traits\LogChanges;
 use App\Traits\Models\Traits\HasFilter;
 use App\Traits\Models\Traits\HasLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -111,9 +112,9 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOneThrough(Post::class, Profile::class);
     }
 
-    public function roles(): BelongsToMany
+    public function roles()
     {
-        return $this->belongsToMany(Role::class);
+        return $this->belongsToMany(Role::class, 'role_user');
     }
 
     public function getIsAdminAttribute(): bool

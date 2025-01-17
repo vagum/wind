@@ -29,6 +29,7 @@ class ProfileResource extends JsonResource
             'birthed_at' => $this->birthed_at,
             'user_name' => $userData['name'] ?? null,
             'user_email' => $userData['email'] ?? null,
+            'image_url' => $this->image_url,
         ];
     }
 }
