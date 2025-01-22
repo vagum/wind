@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Post\StoreCommentRequest;
+use App\Http\Resources\Comment\CommentResource;
 use App\Models\Post;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PostController extends Controller
@@ -63,6 +66,13 @@ class PostController extends Controller
         $post->delete();
 
         return response(['message' => 'Post has been deleted']);
+    }
+
+    public function storeComment(Post $post, StoreCommentRequest $request): array
+    {
+        $data = $request->validationData();
+        $comment = auth()->user()->profile->comments()->create($data);
+        return CommentResource::make($comment)->resolve();
     }
 }
 

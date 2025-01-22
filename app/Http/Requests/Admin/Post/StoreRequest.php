@@ -16,23 +16,41 @@ class StoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:255|unique:posts,title',
-            'description' => 'nullable|string',
-            'content' => 'nullable|string',
-            'published_at' => 'nullable|date_format:Y-m-d',
-            'category_id' => 'required|integer|exists:categories,id',
-            'image' => 'nullable|image',
-            'image_path'  => 'string|nullable', // без этого не провалидирует повторно
+            'post.title' => 'required|string|max:255|unique:posts,title',
+            'post.description' => 'nullable|string',
+            'post.content' => 'nullable|string',
+            'post.published_at' => 'nullable|date_format:Y-m-d',
+            'post.category_id' => 'required|integer|exists:categories,id',
+            'post.image' => 'nullable|image',
+            'tags' => 'nullable|string',
         ];
     }
 
     public function passedValidation()
     {
-        if ($this->hasFile('image')) {
-            $this->merge([
-                'image_path' => Storage::disk('public')->put('/images', $this->image),
-            ]);
-
-        }
+        isset($this->post['image']) ? $this->merge([
+             // добавляем то что внутри в post, чтобы выровнять с тагами
+             'post' => [
+                 // обрезаем post. , чтобы добавить profile_id и image_path на тот же уровень
+                 ...$this->validated()['post'],
+                 // получаем профайл залогиненного пользователя
+                 'profile_id' => auth()->user()->profile->id,
+                 // добавляем image_path когда картинка есть
+                 'image_path' => Storage::disk('public')->put('/images', $this->post['image'])
+             ],
+            // добавляем преобразование строки тагов в массив, иначе просто строка будет
+            'tags' => explode(',', $this->tags),
+        ]) : $this->merge([
+            // добавляем то что внутри в post, чтобы выровнять с тагами
+            'post' => [
+                // обрезаем post. , чтобы добавить profile_id на тот же уровень
+                ...$this->validated()['post'],
+                // получаем профайл залогиненного пользователя
+                'profile_id' => auth()->user()->profile->id,
+            ],
+            // если картинки нет, то добавляем только преобразование строки тагов в массив
+            'tags' => explode(',', $this->tags),
+        ]);
     }
+
 }

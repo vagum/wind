@@ -15,7 +15,7 @@ class ProfileResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $userData = UserResource::make($this->user)->resolve();
+//        $userData = UserResource::make($this->user)->resolve();
 
         return [
             'id' => $this->id,
@@ -27,8 +27,13 @@ class ProfileResource extends JsonResource
             'description' => $this->description,
             'gender' => $this->gender,
             'birthed_at' => $this->birthed_at,
-            'user_name' => $userData['name'] ?? null,
-            'user_email' => $userData['email'] ?? null,
+            'user' => [
+                'id' => $this->user->id,
+                'name' => $this->user->name,
+                // Другие поля пользователя, если необходимо
+            ],
+//            'user_name' => $userData['name'] ?? null,
+//            'user_email' => $userData['email'] ?? null,
             'image_url' => $this->image_url,
         ];
     }

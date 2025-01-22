@@ -7,6 +7,7 @@ use App\Traits\Models\Traits\HasFilter;
 use App\Traits\Models\Traits\HasLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -38,7 +39,7 @@ class Profile extends Model
         return $this->hasMany(Post::class);
     }
 
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -51,6 +52,11 @@ class Profile extends Model
     public function getImageUrlAttribute(): string
     {
         return Storage::disk('public')->url($this->avatar);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
     }
 
 }

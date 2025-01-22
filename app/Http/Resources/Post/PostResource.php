@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Post;
 
 use App\Http\Resources\Category\CategoryResource;
+use App\Http\Resources\Comment\CommentResource;
 use App\Http\Resources\Profile\ProfileResource;
 use App\Http\Resources\Tag\TagResource;
 use App\Models\Category;
@@ -30,6 +31,7 @@ class PostResource extends JsonResource
             'profile_name' => ProfileResource::make($this->profile)->resolve(),
             'tags_title' => $this->tags->pluck('title'),
             'image_url' => $this->image_url,
+            'comments' => CommentResource::collection($this->whenLoaded('comments')),
         ];
     }
 }
