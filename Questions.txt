@@ -1,51 +1,54 @@
 Всё в старом проекте wind!
 
 Временные метки по видео предыдущего урока:
-08.51 Добавление в контроллер выборку категорий для создания поста
-10.11 Добавляем в шаблон input type для селекта с категориями
-12.37 v-model у селекта в шаблоне
-13.20 инициализация в шаблоне в data category_id: null,
-13.51 прописываем в Posts/StoreRequest.php 'category_id' => 'nullable|integer|exists:categories,id'
-15.19 поймали категорию
-15.37 исправляем то что после отсылки формы, сбросилась надпись "Выберите категорию"
-18.03 прокидываем картинку
-18.41 файлу нельзя назначать v-model - удаляем
-19.24 что нужно сделать чтобы картинка долетела на бэк
-19.57 записываем в data() image: null
-20.10 добавляем метод setImage в methods в шаблоне vue
-20.22 прописываем у ссылки @change="setImage"
-21.59 console.log(e.target.files[0]);
-23.23 прописываем в setImage(e) this.post.image = e.target.files[0];
-23.55 дописываем в Posts/StoreRequest 'image' => 'nullable|file',
-24.21 в PostController смотри dd($data)
-25.35 чтобы не ругалось на Image добавляем в methods: хедер 'Content-Type': 'multipart/form-data'
-28.34 про диски и Storage, где это задается в конфиге config/filesystems.php
-28.44 указываем куда сохранять картинку в PostController Storage::disk('public')->put('/images', $data['image']);
-30.06 прописываем в PostController unset($data['image']); иначе всё упадет
-30.17 'image_path' в PostResource.php у меня уже прописано, не прописываю
-31.01 запускаем создание поста с картинкой
-34.33 добавляем отображение картинки в Posts/Show.vue
-35.37 заходим в модель Post и делаем геттер getImageUrlAttribute для отображения ссылки
-37.45 исправляем имя домена в .env на http://127.0.0.1:8000
-38.35 делаем правки в PostResource и меняем image_path на 'image_url' => $this->image_url,
-39.27 в Post/Show.vue прописываем <img :src="post.image_url" />
-40.06 делаем симлинк php artisan storage:link
-42.28 отображение Success для успешно добавленного поста в Create.vue
-43.07 добавление атрибута в data() isSuccess
-44.19 обнуление поля file в форме
-45.23 прописываем в Create.vue ref="image_input" у поля загрузки картинки
-46.30 смотрим console.log(this.$refs.image_input) в setImage
-46.53 обнуляем this.$refs.image_input.value = null
-49.36 multiple для выбора нескольких файлов
-50.53 в Post/StoreRequest.php метод passedValidation для добавления дополнительных данных в массив
-      валидированных данных.
-52.04 исправляем в PostController $request->validationData()
-52.44 переносим данные из PostController в Post/StoreRequest
-54.16 сеньерская задача
+18.20 добавляем в Post/Index.vue поля для будущих фильтров
+19.10 создаем у инпута v-model="filter.title" и прочие фильтры
+20.58 исправляем белый экран из-а того что не задали filter в data() vue шаблона
+22.20 копируем из Api/Admin/Post/IndexRequest в Admin/Post/IndexRequest
+22.27 меняем неймспейс если не поменялся. у меня поменялся сам.
+22.47 прописываем в PostController у метода index() IndexRequest
+22.56 в PostController вписываем $data = $request->validated() и прочее для фильтра
+23.11 пишем в PostController dd($data) чтобы посмотреть ключи доходят
+23.16 так же в Post/Index.vue прописываем у кнопки фильтра @click.prevent="getPosts"
+23.40 прописываем getPosts в methods
+24.53 исправили у инпута для views тип на number
+25.02 смотрим dd в браузере
+26.05 прописываем в PostController условие if(Request::wantsJson())
+26.28 в PostController меняем ответ для метода index на array|Response
+27.10 смотрим что получилось в браузере
+27.35 в Index.vue меняем старый массив posts на отфильтрованный
+28.19 смотрим ошибку в браузере
+28.48 делаем промежуточный элемент postsData, чтобы иметь возможность менять то что пришло в props
+28.59 меняем у v-for на postsData
+29.07 меняем в .then this.posts на this.postsData чтобы отфильтрованное грузить туда
+29.28 смотрим в браузере
+30.24 в PostController начинаем делать пагинацию
+30.42 вводим аргументы для пагинации
+32.28 смотрим в инструментах разработчика данные по пагинации в которых нет ничего кроме 5 элементов
+32.52 убираем в PostController ->resolve(), чтобы получить данные по пагинации
+33.20 нажали F5 в браузере и всё пропало т.к. элементы появились у другого ключа
+33.42 в шаблоне Post/Index.vue изменили ключ на v-for="post in postsData.data"
+34.18 смотрим в инструментах разработчика что пришли линки на пагинацию
+34.39 добавляем пагинацию в шаблон Post/Index.vue
+37.30 чтобы не было кракозябр в некст и превиос делаем v-html="link.label"
+38.52 добавляем в Post/IndexRequest переменные для фильтров page и per_page
+39.22 в Post/Index.vue добавляем @click="filter.page = link.label"
+42.35 делаем правки в Post/IndexRequest в passedValidation
+43.09 делам правки в PostController в validationData() и paginate($data['per_page'],'*','page',$data['page'])
+43.55 не сработал фильтр т.к. надо возвращать в PostController AnonymousResourceCollection вместо array
+46.10 делаем правку в PostController меняя array на AnonymousResourceCollection
+48.27 добавляем watch в Post/Index.vue для filter
+48.46 убираем кнопку фильтра
+50.17 делаем чтобы забирались данные изнутри фильтра
+54.50 задаем минимальное значение для фильтрации даты
+
+1) cделал всё что в уроке
+2) поменял в пропсах у posts Array на Object, чтобы убрать warning
+3) в трейт /Traits/Models/Traits/HasFilter исправил scopeFilter. трейт подключен в модели Post.
+4) в PostController добавил массив $active_filters, где перечислил фильтры какие активировать и их типы
+5) в Post/Index.vue добавил обработку адресной строки и динамические фильтры
+6) спрятал не активные кнопки вперед и назад :hidden="!link.url && link.label !== '...'"
+7) для Create.vue сделал сброс Success при вводе чего-то в форму + игнорирование очистки формы, т.к. вотчер её видит.
 
 
-Что сделано по уроку:
-1) Всё что в уроке
-2) в StoreRequest добавил удаление image с повторной валидацией
-3) добавил универсальную загрузку полей селект и имаджей
 

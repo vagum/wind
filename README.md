@@ -8,6 +8,112 @@ https://github.com/vagum/windclient
 
 https://github.com/vagum/wind/blob/main/Wind.postman_collection.json
 
+=========== 18 Filter Pagination ============
+
+Всё в старом проекте wind!
+
+Временные метки по видео предыдущего урока:
+```
+18.20 добавляем в Post/Index.vue поля для будущих фильтров
+19.10 создаем у инпута v-model="filter.title" и прочие фильтры
+20.58 исправляем белый экран из-а того что не задали filter в data() vue шаблона
+22.20 копируем из Api/Admin/Post/IndexRequest в Admin/Post/IndexRequest
+22.27 меняем неймспейс если не поменялся. у меня поменялся сам.
+22.47 прописываем в PostController у метода index() IndexRequest
+22.56 в PostController вписываем $data = $request->validated() и прочее для фильтра
+23.11 пишем в PostController dd($data) чтобы посмотреть ключи доходят
+23.16 так же в Post/Index.vue прописываем у кнопки фильтра @click.prevent="getPosts"
+23.40 прописываем getPosts в methods
+24.53 исправили у инпута для views тип на number
+25.02 смотрим dd в браузере
+26.05 прописываем в PostController условие if(Request::wantsJson())
+26.28 в PostController меняем ответ для метода index на array|Response
+27.10 смотрим что получилось в браузере
+27.35 в Index.vue меняем старый массив posts на отфильтрованный
+28.19 смотрим ошибку в браузере
+28.48 делаем промежуточный элемент postsData, чтобы иметь возможность менять то что пришло в props
+28.59 меняем у v-for на postsData
+29.07 меняем в .then this.posts на this.postsData чтобы отфильтрованное грузить туда
+29.28 смотрим в браузере
+30.24 в PostController начинаем делать пагинацию
+30.42 вводим аргументы для пагинации
+32.28 смотрим в инструментах разработчика данные по пагинации в которых нет ничего кроме 5 элементов
+32.52 убираем в PostController ->resolve(), чтобы получить данные по пагинации
+33.20 нажали F5 в браузере и всё пропало т.к. элементы появились у другого ключа
+33.42 в шаблоне Post/Index.vue изменили ключ на v-for="post in postsData.data"
+34.18 смотрим в инструментах разработчика что пришли линки на пагинацию
+34.39 добавляем пагинацию в шаблон Post/Index.vue
+37.30 чтобы не было кракозябр в некст и превиос делаем v-html="link.label"
+38.52 добавляем в Post/IndexRequest переменные для фильтров page и per_page
+39.22 в Post/Index.vue добавляем @click="filter.page = link.label"
+42.35 делаем правки в Post/IndexRequest в passedValidation
+43.09 делам правки в PostController в validationData() и paginate($data['per_page'],'*','page',$data['page'])
+43.55 не сработал фильтр т.к. надо возвращать в PostController AnonymousResourceCollection вместо array
+46.10 делаем правку в PostController меняя array на AnonymousResourceCollection
+48.27 добавляем watch в Post/Index.vue для filter
+48.46 убираем кнопку фильтра
+50.17 делаем чтобы забирались данные изнутри фильтра
+54.50 задаем минимальное значение для фильтрации даты
+```
+
+Что сделано по уроку:
+
+1) cделал всё что в уроке
+2) поменял в пропсах у posts Array на Object, чтобы убрать warning
+3) в трейт /Traits/Models/Traits/HasFilter исправил scopeFilter. трейт подключен в модели Post.
+4) в PostController добавил массив $active_filters, где перечислил фильтры какие активировать и их типы
+5) в Post/Index.vue добавил обработку адресной строки и динамические фильтры
+6) спрятал не активные кнопки вперед и назад :hidden="!link.url && link.label !== '...'"
+7) для Create.vue сделал сброс Success при вводе чего-то в форму + игнорирование очистки формы, т.к. вотчер её видит.
+
+========== 17 Tags, Transactios, Service ===========
+
+Всё в старом проекте wind!
+
+Временные метки по видео предыдущего урока:
+```
+22.25 добавляем в Create.vue поле для ввода тагов
+23.28 обобщаем сущности entries чтобы из формы передавать в две таблицы
+24.45 правим v-model у постов и тагов. у постов v-model="entries.post.*", а у тагов v-model="entries.tags"
+25.09 переходим в Post/StoreRequest
+26.40 прокидываем все элементы поста через ...$this->validated()['post'] убирая ключ post.
+27.00 делаем dd($data) в PostController
+27.15 смотрим в браузере
+28.55 исправляем except(['post.image'])
+29.36 в PostController исправили $data['post']['profile_id'] и Post::create($data['post'])
+30.27 php artisan make:class Services/PostService
+31.51 в PostServices создаем класс store
+33.49 php artisan make:class Services/TagService
+35.07 в PostService добавляем обработку тегов
+35.48 в TagService добавляем метод storeBatch
+37.02 добавляем обработку тегов в Post/StoreRequest
+37.55 проверяем dd($data) в PostController
+38.23 проверяем без dd'шки
+39.57 исправляем TagService чтобы привести к массиву return
+41.01 транзакция на случай если не всё выполнилось гладко
+41.11 в PostService делаем try .. catch
+43.54 проверяем что транзакция срабатывает
+45.46 разбираемся с безобразным местом $data['post']['profile_id'] в PostController
+46.08 переходим в роуты routes/admin.php и вписываем ->middleware(['auth'])
+46.34 логинимся
+51.47 ТОП 3 крокодильих слёз по аутентификации, т.к. надо менять в .env AUTH_GUARD=api на web
+52.40 добавляем в Post/StoreRequest запись для извлечения profile_id для залогиненного пользователя
+53.32 смотри юзеря через dd в Post/StoreRequest
+54.09 убираем обращение к модели Profile в PostController
+54.15 убеждаемся, что всё работает
+```
+
+По домашке что сделано:
+
+1) сделал всё что в уроке с проверкой на загрузку имаджа
+2) добавил в TagService приведение тагов к нижнему регистру и проверку на существование после обрезки
+3) добавил в PostService проверку на наличие тагов, если тагов нет то ничего для них не делаем
+4) чтобы показать ошибку в PostService добавил throw new \Exception($exception->getMessage());
+5) поменял AUTH_GUARD=api на AUTH_GUARD=web в .env
+6) добавил в модель Post для getImageUrlAttribute() проверку на не null у image_path и добавил
+   в Post/Show.vue v-if="post.image_url" на отображение картинки, чтобы не отображать если её нет.
+7) добавил в Post/Create.vue слушателя на отображение сообщения об успехе.
+   При первом клике по странице сообщение об успехе скрывается.
 
 ============== 16 storage image ==========
 
@@ -59,6 +165,7 @@ https://github.com/vagum/wind/blob/main/Wind.postman_collection.json
 ```
 
 Что сделано по уроку:
+
 1) Всё что в уроке
 2) в StoreRequest добавил удаление image с повторной валидацией
 3) добавил универсальную загрузку полей селект и имаджей

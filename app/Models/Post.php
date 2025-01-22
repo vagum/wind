@@ -2,19 +2,13 @@
 
 namespace App\Models;
 
-use App\Http\Filters\PostFilter;
 use App\Observers\PostObserver;
-use App\Traits\LogChanges;
 use App\Traits\Models\Traits\HasFilter;
-use App\Traits\Models\Traits\HasLog;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
 #[ObservedBy(PostObserver::class)]
@@ -66,8 +60,9 @@ class Post extends Model
         return $this->hasMany(Comment::class);
     }
 
-    public function getImageUrlAttribute(): string
+    public function getImageUrlAttribute(): ?string
     {
-        return Storage::disk('public')->url($this->image_path);
+       return $this->image_path ? Storage::disk('public')->url($this->image_path) : null;
     }
+
 }

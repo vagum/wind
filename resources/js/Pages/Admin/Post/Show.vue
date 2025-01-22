@@ -23,7 +23,7 @@ export default {
         <div class="mb-4 text-xl font-semibold text-gray-800 break-words">
             {{ post.title }}
         </div>
-        <div class="mb-4 text-xl font-semibold text-gray-800 break-words">
+        <div v-if="post.image_url" class="mb-4 text-xl font-semibold text-gray-800 break-words">
             <img :src="post.image_url" :alt="post.title"/>
         </div>
         <div class="text-gray-600 break-words">

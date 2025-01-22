@@ -3,23 +3,45 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\Post\IndexRequest;
 use App\Http\Requests\Admin\Post\StoreRequest;
 use App\Http\Resources\Category\CategoryResource;
 use App\Http\Resources\Post\PostResource;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Profile;
-use Illuminate\Http\Request;
+use App\Services\PostService;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Response;
 
 class PostController extends Controller
 {
-    public function index(): Response
+    public function index(IndexRequest $request): AnonymousResourceCollection|Response
     {
-        $posts = Post::latest()->get();
-        $posts = PostResource::collection($posts)->resolve();
-        return inertia('Admin/Post/Index', compact('posts'));
+        $data = $request->validationData();
+//        dd($data);
+        $posts = Post::filter($data)->orderBy('id','desc')->paginate($data['per_page'],'*','page',$data['page']);
+        $posts = PostResource::collection($posts);
+
+        // Массив с фильтрами и их типами
+        $active_filters = [
+            'title' => 'text',
+            'content' => 'text',
+            'published_at_from' => 'date',
+            'views_from' => 'number',
+        ];
+
+        if(Request::wantsJson()){
+            return $posts;
+        }
+
+        // Передаем массив $active_filters вместе с $posts
+        return inertia('Admin/Post/Index', [
+            'posts'          => $posts,
+            'active_filters' => $active_filters,
+        ]);
     }
 
     public function show(Post $post): Response
@@ -36,14 +58,10 @@ class PostController extends Controller
 
     public function store(StoreRequest $request)
     {
-//        $data = $request->validated(); // не возвращает image при повторной валидации в реквесте
-        $data = $request->except('image');
-//        $data = $request->validationData(); // возвращает image по любому
-
+//        dd($request->validationData());
+        $data = $request->except('post.image');
 //        dd($data);
-        $data['profile_id'] = Profile::inRandomOrder()->first()->id;
-//        unset($data['image']);
-        $post = Post::create($data);
+        $post = PostService::store($data);
         return PostResource::make($post)->resolve();
     }
 }

@@ -9,7 +9,7 @@ use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('admin')->group(function () {
+Route::prefix('admin')->middleware(['auth'])->group(function () {
     Route::resource('categories', CategoryController::class, [
         'as' => 'admin',
         'only' => ['index', 'create', 'store', 'show']
