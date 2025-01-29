@@ -8,7 +8,7 @@ https://github.com/vagum/windclient
 
 https://github.com/vagum/wind/blob/main/Wind.postman_collection.json
 
-====== 19 Nested Route, Delete, Edit, Comments =====
+======= 19 Nested Route, Delete, Edit, Comments =====
 
 Временные метки по видео предыдущего урока:
 ```
