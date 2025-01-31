@@ -8,6 +8,70 @@ https://github.com/vagum/windclient
 
 https://github.com/vagum/wind/blob/main/Wind.postman_collection.json
 
+============= 20 Client, Likes, API ==============
+
+Временные метки по видео предыдущего урока:
+```
+24.20 создаем routes/client.php и инклюдим его в routes/web.php
+25.20 прописываем в него роуты
+25.40 делаем Namespace для Client и копируем туда PostController
+27.16 копируем AdminLayout.vue в resources/js/Layouts/Client/ClientLayout.vue
+27.37 делаем структуру каталогов как у Admin, т.е. Client/Post/ и копируем туда из Admin/Post/Index.vue
+28.16 после того как там внутри всё почистили, прописываем v-for для постов и т.д.
+29.26 делаем правки в Client/PostController.php
+29.50 уточняет что пользователь должен видеть только свои посты.
+30.29 уточняет что пользователь должен видеть не только свои посты, чтобы обыграть лайкосики.
+30.50 смотрим что получилось в браузере http://127.0.0.1:8000/posts
+33.58 копируем Client/Index.vue в Client/Show.vue
+34.07 удаляем оттуда v-for="(post, index) in posts" :key="index" и меняем прочие данные для отображения одного поста
+32.24 в Client/PostController.php делаем правки для метода show
+40.19 в Client/Index.vue вставляем <Link> для титла
+40.58 прописываем новый роут дя show в /routes/client.php
+41.19 смотрим в браузере http://127.0.0.1:8000/posts и тыкаем в ссылку
+41.56 берем сердечко для лайкосика с https://heroicons.com
+42.03 вставляем его в Client/Show.vue
+42.30 сердцу делаем класс cursor-pointer - чтобы при наведении появлялся палец и смотрим что получилось в браузере
+43.09 добавили второе сердце поправив ему fill="#000"
+46.33 делаем вложенный роут для лайков toggleLike в routes/client.php
+47.21 делаем правки в Client/PostController.php для метода toggleLike
+48.26 делаем dd($res); из Client/PostController.php
+48.36 делаем правки в Client/Show.vue @click="toggleLike()" у сердечек
+49.20 в роуте у лаков меняем метод на post
+49.40 в methods прописываем метод toggleLike
+50.11 смотрим в браузере вывод dd из Client/PostController.php
+51.12 делаем return в Client/PostController.php
+52.00 меняем array на JsonResponse
+52.28 прописываем в toggleLike в Client/Show.vue this.post.is_liked = res.data.is_liked
+52.49 делаем проверку включен тогл или нет у лайков :fill="post.is_liked ? '#000' : 'none'" в Client/Show.vue
+53.14 проверяем в браузере, но при рефреше теряется состояние
+53.38 делаем правки в PostResource.php чтобы пропускалось состояние лайка 'is_liked' => $this->is_liked,
+53.49 в модель Post.php добавляем в модель атрибут getIsLikedAttribute
+55.00 рефрешим и смотрим в браузере
+1.10.07 ответ на вопрос как сделать одновременно чтобы работал API и WEB роуты
+делаем для этого правки в app/Http/Controllers/Api/AuthController.php
+```
+
+Что сделано:
+
+1) Всё по уроку
+2) Добавил нейм у роута для индекса, т.к. конфликтовало с другими роутами по предыдущим урокам
+3) добавил comments' => CommentResource::collection($this->whenLoaded('comments')), в Post/PostResource.php
+   чтобы собрать все комменты и комменты комментов поста и лайки для вложенных комментов и реплаев
+3) добавил в модель Post проверку на аутентифицированного пользователя в getIsLikedAttribute
+4) Добавил для комментов в Resources/Post/PostResource.php 'comments_count' => $this->comments_count,
+   и в модель Post добавил getCommentsCountAttribute который возвращает кол-во комментов в comments_count
+5) прописал auth в пропсах и добавил у toggleLike метода if (!this.auth.user) в Client/Post/Index.vue
+6) сделал инфинити пагинацию и фильтры
+7) добавил ссылку на профайл с именем профайла с карточки
+8) добавил в карточку аватарку, таги и категорию поста
+9) прописал auth в пропсах и добавил у формы комментов v-if="auth.user" в Client/Post/Show.vue
+10) Добавил в Client/Post/Show.vue импорт import CommentItem from '@/Components/CommentItem.vue';
+11) подключил его в components: {
+12) добавил для ревью комментов Resources/Comment/CommentResource.php 'comments_count' => $this->comments_count,
+    в модель Comment.php добавил getCommentsCountAttribute который возвращает кол-во комментов в comments_count
+13) добавил для лайков комментов getIsLikedAttribute в /Models/Comment.php и в CommentResource $this->is_liked
+14) добавил toggleLike и storeReply в Client/CommentController.php
+
 ======= 19 Nested Route, Delete, Edit, Comments =====
 
 Временные метки по видео предыдущего урока:

@@ -31,6 +31,8 @@ class PostResource extends JsonResource
             'profile_name' => ProfileResource::make($this->profile)->resolve(),
             'tags_title' => $this->tags->pluck('title'),
             'image_url' => $this->image_url,
+            'is_liked' => $this->is_liked,
+            'comments_count' => $this->comments_count,
             'comments' => CommentResource::collection($this->whenLoaded('comments')),
         ];
     }

@@ -17,7 +17,12 @@ class CommentResource extends JsonResource
         return [
             'id' => $this->id,
             'content' => $this->content,
+            'post_id' => $this->post_id,
+            'parent_id' => $this->parent_id,
+            'is_liked' => $this->is_liked, // getIsLikedAttribute в Models/Comment.php
+            'likes' => $this->likedProfiles()->count(), // Подсчет лайков,
             'created_at' => $this->created_at->toDateTimeString(),
+            'comments_count' => $this->comments_count, // getCommentsCountAttribute в Models/Comment.php
             'profile' => [
                 'id' => $this->profile->id,
                 'name' => $this->profile->name,

@@ -1,171 +1,64 @@
 Всё в старом проекте wind!
 
 Временные метки по видео предыдущего урока:
-05.01 на https://heroicons.com ищем иконку мусорки
-06.03 вставляет в Post/Index.vue @click="deletePost()"
-06.26 прокидываем id post в каждого поста в мусорку
-06.48 добавляем метод deletePost
-07.24 вписываем в /routes/admin.php у post 'destroy'
-07.35 добавляем в PostControllet.php метод destroy
-11.11 исправляем в методе Post/Index.vue в роуте на удаление admin.posts.delete на admin.posts.destroy
-13.01 чистим от удаленной записи табличку добавляя в Post/Index.vue в метод deletePost this.getPosts()
-13.17 проверяем обновление списка постов в браузере
-21.16 в ставляем в Post/Index.vue карандаш на редактирование поста и Link 'admin.posts.edit'
-21.36 добавлем в routes/admin.php роут для edit у постов
-21.49 в PostController.php делаем правки у метода edit
-22.15 клонируем /Post/Create.vue в /Post/Edit.vue
-22.25 меняем в Post/Index.vue Name Create на Edit
-22.38 удалили всё в methods, всё в return у data()
-22.53 удалил всю v-model с формой
-25.30 добавляем отображение ошибок валидации errors: {}
-26.20 переменные откуда забираем ошибку errors[`post.title`][0] т.е. нулевой ключ в массиве
-26.53 идем по ключу и прописываем в catch console.log(e.response.data.errors)
-27.56 добавляем дивы для отображения ошибок
-28.16 смотрим в браузере ключи которые нужно добавить для отображения ошибок
-28.42 добавляем div v-for для перебора всех ошибок поля
-29.20 меняем текст сообщения ошибок для полей в Post/StoreRequest.php
-30.13 про удаление в PostController.php и soft delete
-32.06 про удаление пользователя в UserObserver.php
-32.39 про deleting в UserObserver.php
-33.39 делаем боковую колонку с ссылками в js/Layouts/AdminLayout.vue
-35.12 комменты у постов
-35.27 делаем правки для комментов в Post/Show.vue
-36.46 в Post/Show.vue указываем колонку таблички у коммента откуда брать данные comment.content
-37.02 создаем data() для комментов в Post/Show.vue
-37.21 делаем кнопку для отправки коммента в Post/Show.vue
-38.16 добавляем метод storeComment
-39.25 в метод storeComment добавляем axios.post(route('admin.comments.store'))
-40.33 про вложенный роут в storeComment
-41.11 в routes/web.php пример
-        Route::post('posts/{post}/comments')
-        Route::show('posts/{post}/comments/{comment}')
-42.50 делаем если еще нет php artisan make:controller PostController, у нас он есть с прежних уроков
-43.25 вставляем в routes/web.php Route::post('posts/{post}/comments', [PostController::class,'storeComment']);
-      используем use App\Http\Controllers\PostController; а не из Admin !
-43.31 делаем правки в Controllers/PostController.php для метода storeComment()
-44.06 php artisan make:request Post/StoreCommentRequest
-44.31 в Controllers/PostController.php делаем безопасное добавление комментов
-44.52 добавили Post $post к StoreCommentRequest $request
-45.40 проверяем аутентифицированный ли пользователь отправил запрос
-      auth()->user()->profile->comments()->create($data);
-46.23 в StoreCommentRequest добавляем passedValidation
-46.57 добавляем $comment к auth() в Controllers/PostController.php
-47.06 проверяем в модели Models/Profile есть ли public function comments()
-47.33 php artisan make:resource Comment/CommentResource если нет. у меня есть.
-47.49 в PostController возвращаем return CommentResource::make($comment)->resolve;
-48.13 меняем в PostController респонс на array
-48.23 переходит в Post/Show.vue и правим на axios.post(route('comments.store', this.post.id), this.comment)
-48.45 прописываем в StoreCommentRequest rules
-49.03 правим Controllers/PostController.php на $data = $request->validationData();
-49.11 пробуем в браузере отправлять коммент и получаем ошибку что нет роута comments.store
-49.36 в routes/web.php добавляем ->name('posts.comments.store')
-50.03 правим роут в Show.vue на axios.post(route('posts.comments.store', this.post.id), this.comment)
-50.07 опять пробуем в браузере отправить коммент
-51.42 смотрим https://laravel.su/docs/11.x/controllers#ogranicenie-resursnyx-marsrutov
+24.20 создаем routes/client.php и инклюдим его в routes/web.php
+25.20 прописываем в него роуты
+25.40 делаем Namespace для Client и копируем туда PostController
+27.16 копируем AdminLayout.vue в resources/js/Layouts/Client/ClientLayout.vue
+27.37 делаем структуру каталогов как у Admin, т.е. Client/Post/ и копируем туда из Admin/Post/Index.vue
+28.16 после того как там внутри всё почистили, прописываем v-for для постов и т.д.
+29.26 делаем правки в Client/PostController.php
+29.50 уточняет что пользователь должен видеть только свои посты.
+30.29 уточняет что пользователь должен видеть не только свои посты, чтобы обыграть лайкосики.
+30.50 смотрим что получилось в браузере http://127.0.0.1:8000/posts
+33.58 копируем Client/Index.vue в Client/Show.vue
+34.07 удаляем оттуда v-for="(post, index) in posts" :key="index" и меняем прочие данные для отображения одного поста
+32.24 в Client/PostController.php делаем правки для метода show
+40.19 в Client/Index.vue вставляем <Link> для титла
+40.58 прописываем новый роут дя show в /routes/client.php
+41.19 смотрим в браузере http://127.0.0.1:8000/posts и тыкаем в ссылку
+41.56 берем сердечко для лайкосика с https://heroicons.com
+42.03 вставляем его в Client/Show.vue
+42.30 сердцу делаем класс cursor-pointer - чтобы при наведении появлялся палец и смотрим что получилось в браузере
+43.09 добавили второе сердце поправив ему fill="#000"
+46.33 делаем вложенный роут для лайков toggleLike в routes/client.php
+47.21 делаем правки в Client/PostController.php для метода toggleLike
+48.26 делаем dd($res); из Client/PostController.php
+48.36 делаем правки в Client/Show.vue @click="toggleLike()" у сердечек
+49.20 в роуте у лаков меняем метод на post
+49.40 в methods прописываем метод toggleLike
+50.11 смотрим в браузере вывод dd из Client/PostController.php
+51.12 делаем return в Client/PostController.php
+52.00 меняем array на JsonResponse
+52.28 прописываем в toggleLike в Client/Show.vue this.post.is_liked = res.data.is_liked
+52.49 делаем проверку включен тогл или нет у лайков :fill="post.is_liked ? '#000' : 'none'" в Client/Show.vue
+53.14 проверяем в браузере, но при рефреше теряется состояние
+53.38 делаем правки в PostResource.php чтобы пропускалось состояние лайка 'is_liked' => $this->is_liked,
+53.49 в модель Post.php добавляем в модель атрибут getIsLikedAttribute
+55.00 рефрешим и смотрим в браузере
+1.10.07 ответ на вопрос как сделать одновременно чтобы работал API и WEB роуты
+         делаем для этого правки в app/Http/Controllers/Api/AuthController.php
 
-Что сделал:
-1) Сделал всё по уроку
-2) добавил в роуты и PostController всё для Update
-3) Post/UpdateRequest скопировал из Api/Admin/UpdateRequest.php поправив поля для выравнивания массива post.
-4) добавил в Post/UpdateRequest passedValidation для имаджа из /Post/StoreRequest.php исправив его
-   на удаление старой картинки, если передали новую.
-5) добавил в PostService метод для update где сделал $post->tags()->sync($tagIds);
-6) поменял в axios на .patch(route('admin.posts.update', { post: this.post.id }) и получил что приходит
-   пустой массив, если роута с POST нет а есть только PUT/PATCH
-   в итоге надо было сделать вот так
-   axios
-                .post(route('admin.posts.update', { post: this.post.id }), {
-                    ...this.entries,
-                    _method: 'patch',
-                }, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                })
-   т.е прописать _method: 'patch'. Если не прописывать его, то надо иметь роут с методом POST и выставлять
-   axios .post.
-6) в Post/Edit.vue в data() у даты исправил формат, т.к. не вставлялся по умолчанию
-   ? new Date(this.post.published_at).toISOString().split('T')[0]
-7) в Post/Edit.vue в data() сделал у тагов this.post.tags_title ? this.post.tags_title.join(', ') : '',
-8) передал в props из модели категории
-9) добавил getCategoryIdByTitle чтобы имея post.category_title получить id из массива $categories
-10) обновилось в methods, чтобы не обнулять данные после сохранения, а загружать обновленные ИЗ ОТВЕТА сервера.
-11) добавил в editPost обработку пустого имаджа, чтобы изменялось если добавлено новое изображение
-12) убрал отправку данных которые не изменились и поправил условия в реквесте когда прилетает пустой post
-13) добавил required поля, которые отсылаются по любому, чтобы не ругалась база или rules на required
-14) добавил комменты и реактивное добавление
-15) добавил удаление поста и анимированное модальное окно с запросом на удаление
-16) ошибки валидации при создании поста и редактировании
 
-Вопросы по предыдущему уроку:
-сделать роуты c пагинацией /domain.com/1/ ... /domain.com/5/,
-соответственно query /domain.com/1/some-query/
-или query /domain.com/some-query/
-или /domain.com/some-query-1.html, где 1 - номер страницы пагинации
-причем сначала отрабатываем роуты типа /domain.com/tovar/, /domain.com/tovar/slug/, /domain.com/contacts/
-причем есть и тут пагинация /domain.com/tovar/1/ ... /domain.com/tovar/10/
-а если на одном домене надо
-/domain1.com/some-query-1.html
-на втором так
-/domain2.com/1/some-query.html
-на третьем
-/domain3.com/1/some-query/
-
-сейчас я сделал через
-Route::group(['middleware' => [DomainValidationMiddleware::class]], function () {
-    Route::any('/{any}', [DomainController::class, 'handle'])->where('any', '.*');
-});
-а дальше сам рулю.
-
-Временные метки по видео перпредыдущего урока:
-18.20 добавляем в Post/Index.vue поля для будущих фильтров
-19.10 создаем у инпута v-model="filter.title" и прочие фильтры
-20.58 исправляем белый экран из-а того что не задали filter в data() vue шаблона
-22.20 копируем из Api/Admin/Post/IndexRequest в Admin/Post/IndexRequest
-22.27 меняем неймспейс если не поменялся. у меня поменялся сам.
-22.47 прописываем в PostController у метода index() IndexRequest
-22.56 в PostController вписываем $data = $request->validated() и прочее для фильтра
-23.11 пишем в PostController dd($data) чтобы посмотреть ключи доходят
-23.16 так же в Post/Index.vue прописываем у кнопки фильтра @click.prevent="getPosts"
-23.40 прописываем getPosts в methods
-24.53 исправили у инпута для views тип на number
-25.02 смотрим dd в браузере
-26.05 прописываем в PostController условие if(Request::wantsJson())
-26.28 в PostController меняем ответ для метода index на array|Response
-27.10 смотрим что получилось в браузере
-27.35 в Index.vue меняем старый массив posts на отфильтрованный
-28.19 смотрим ошибку в браузере
-28.48 делаем промежуточный элемент postsData, чтобы иметь возможность менять то что пришло в props
-28.59 меняем у v-for на postsData
-29.07 меняем в .then this.posts на this.postsData чтобы отфильтрованное грузить туда
-29.28 смотрим в браузере
-30.24 в PostController начинаем делать пагинацию
-30.42 вводим аргументы для пагинации
-32.28 смотрим в инструментах разработчика данные по пагинации в которых нет ничего кроме 5 элементов
-32.52 убираем в PostController ->resolve(), чтобы получить данные по пагинации
-33.20 нажали F5 в браузере и всё пропало т.к. элементы появились у другого ключа
-33.42 в шаблоне Post/Index.vue изменили ключ на v-for="post in postsData.data"
-34.18 смотрим в инструментах разработчика что пришли линки на пагинацию
-34.39 добавляем пагинацию в шаблон Post/Index.vue
-37.30 чтобы не было кракозябр в некст и превиос делаем v-html="link.label"
-38.52 добавляем в Post/IndexRequest переменные для фильтров page и per_page
-39.22 в Post/Index.vue добавляем @click="filter.page = link.label"
-42.35 делаем правки в Post/IndexRequest в passedValidation
-43.09 делам правки в PostController в validationData() и paginate($data['per_page'],'*','page',$data['page'])
-43.55 не сработал фильтр т.к. надо возвращать в PostController AnonymousResourceCollection вместо array
-46.10 делаем правку в PostController меняя array на AnonymousResourceCollection
-48.27 добавляем watch в Post/Index.vue для filter
-48.46 убираем кнопку фильтра
-50.17 делаем чтобы забирались данные изнутри фильтра
-54.50 задаем минимальное значение для фильтрации даты
-
-1) cделал всё что в уроке
-2) поменял в пропсах у posts Array на Object, чтобы убрать warning
-3) в трейт /Traits/Models/Traits/HasFilter исправил scopeFilter. трейт подключен в модели Post.
-4) в PostController добавил массив $active_filters, где перечислил фильтры какие активировать и их типы
-5) в Post/Index.vue добавил обработку адресной строки и динамические фильтры
-6) спрятал не активные кнопки вперед и назад :hidden="!link.url && link.label !== '...'"
-7) для Create.vue сделал сброс Success при вводе чего-то в форму + игнорирование очистки формы, т.к. вотчер её видит.
+Что сделано:
+1) Всё по уроку
+2) Добавил нейм у роута для индекса, т.к. конфликтовало с другими роутами по предыдущим урокам
+3) добавил comments' => CommentResource::collection($this->whenLoaded('comments')), в Post/PostResource.php
+   чтобы собрать все комменты и комменты комментов поста и лайки для вложенных комментов и реплаев
+3) добавил в модель Post проверку на аутентифицированного пользователя в getIsLikedAttribute
+4) Добавил для комментов в Resources/Post/PostResource.php 'comments_count' => $this->comments_count,
+   и в модель Post добавил getCommentsCountAttribute который возвращает кол-во комментов в comments_count
+5) прописал auth в пропсах и добавил у toggleLike метода if (!this.auth.user) в Client/Post/Index.vue
+6) сделал инфинити пагинацию и фильтры
+7) добавил ссылку на профайл с именем профайла с карточки
+8) добавил в карточку аватарку, таги и категорию поста
+9) прописал auth в пропсах и добавил у формы комментов v-if="auth.user" в Client/Post/Show.vue
+10) Добавил в Client/Post/Show.vue импорт import CommentItem from '@/Components/CommentItem.vue';
+11) подключил его в components: {
+12) добавил для ревью комментов Resources/Comment/CommentResource.php 'comments_count' => $this->comments_count,
+    в модель Comment.php добавил getCommentsCountAttribute который возвращает кол-во комментов в comments_count
+13) добавил для лайков комментов getIsLikedAttribute в /Models/Comment.php и в CommentResource $this->is_liked
+14) добавил toggleLike и storeReply в Client/CommentController.php
 
 
 
