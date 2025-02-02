@@ -8,6 +8,102 @@ https://github.com/vagum/windclient
 
 https://github.com/vagum/wind/blob/main/Wind.postman_collection.json
 
+=========== 21 Mail Components Emit Props =========
+
+Временные метки по видео предыдущего урока:
+```
+23.02 закрываем миддлваром группу роутов в routes/client.php, чтобы могли смотреть посты только авторизованные
+пользователи, чтобы не делать проверку на авторизацию везде и не получать ошибки.
+24.18 перешли в http://127.0.0.1:8000/admin/posts
+25.00 делаем php artisan make:mail Comment/StoredCommentMail
+25.35 делаем правки в app/Console/Commands/GoCommand.php
+26.28 редактируем Mail/Comment/StoredCommentMail.php
+27.33 смотрим доку https://laravel.su/docs/11.x/mail#generaciia-otpravlenii-s-razmetkoi-markdown
+28.01 делаем шаблон для емайлов php artisan make:view mail/comment/stored_comment
+28.43 вписываем путь до шаблона в StoredCommentMail.php
+29.26 переходим в GoCommand.php и выясняем что нам нужен почтовый сервак
+30.21 заходим на https://smtp.bz/panel/
+30.48 прописываем в .env данные по смтп серверу
+32.22 смотрим config/mail.php
+32.28 php artisan go
+33.10 смотри что отправлена почта на емайл пользователя который написал коммент.
+для того чтобы её получить, надо вписать мыло рабочее пользователю.
+33.28 делаем правки в resources/views/mail/comment/stored_comment.blade.php
+34.21 делаем правки с Client/PostController.php
+34.39 смотрим есть ли profile у модели Post.php, у меня был
+35.06 проверяем есть ли user у модели Profile.php, у меня был
+35.27 добавляем в модель Post.php пользователя user, у меня был
+35.45 делаем правки в Client/PostController.php сокращаем до $post->user и прокидываем $post
+36.12 переходим в Mail/Comment/StoredCommentMail.php
+36.38 делаем правки в resources/views/mail/comment/stored_comment.blade.php
+37.02 идем в пост и делаем коммент http://127.0.0.1:8000/admin/posts/92
+37.30 вписываем реальную почту пользователю
+42.05 фронтовская тема которая будет связана с дз
+43.11 смотрим Client/Index.vue
+44.08 о том что нужно создать компонент
+44.32 создаем свой каталог для компоненов и компонент js/Components/Post/PostItem.vue
+45.09 копируем код из Client/Index.vue в js/Components/Post/PostItem.vue
+45.25 прокидываем переменные из родительского шаблона в PostItem.vue
+45.58 прописываем props в PostItem.vue
+46.25 про родственные связи между шаблонами
+47.52 идем в Client/Index.vue и там делаем импорт компонента import PostItem from "@/Components/Post/PostItem.vue";
+48.45 далее в components регистрируем PostItem
+48.54 вместо дива с постами в Client/Index.vue прописываем PostItem
+49.09 передаем посты с помощью :post="post" в компонент PostItem
+49.43 смотрим что получилось http://127.0.0.1:8000/posts
+50.16 далее смотрим отдельный пост http://127.0.0.1:8000/posts/92
+50.36 переходим в http://127.0.0.1:8000/admin/posts/92
+51.06 открываем Pages/Admin/Post/Show.vue
+51.32 у поста http://127.0.0.1:8000/admin/posts/92 комментарии должны открываться по кнопке
+51.47 вставляем эту кнопку в Pages/Admin/Post/Show.vue
+52.07 вставляем getComments в методы в Admin/Post/Show.vue
+52.33 вписываем в data() массив под comments
+52.50 делаем правки у кнопки которая загружает комменты
+53.47 далее правим у getComments .then
+54.01 делаем правку в роутах routes/client.php
+54.11 делаем правки в Client/PostController.php и делаем там indexComment
+54.32 проверяем есть ли comments у модели Post.php, у меня были
+55.20 смотрим в браузере и кликаем показать комменты http://127.0.0.1:8000/admin/posts/92
+55.33 в js/Components копируем /Post в /Comment
+56.01 переименовываем Components/Comment/PostItem.vue в CommentItem.vue
+56.04 делаем правки в Components/Comment/CommentItem.vue
+56.22 импортируем CommentItem.vue в Pages/Admin/Post/Show.vue и прописываем его в components
+56.46 вставляем в div CommentItem
+57.02 смотрим в браузере
+57.56 переходим в Post/PostItem.vue и добавляем кнопку удаления <a @click.prevent="deletePost" href="#">Delete</a>
+58.35 добавляем в методы deletePost
+59.07 переходим в routes/client.php и вставляем роут на удаление поста
+59.29 проверяем в Client/PostController.php что есть метод destroy, он там есть
+59.58 переходим в браузере на http://127.0.0.1:8000/posts
+1.00.31 проблема удаления поста у дочернего шаблона
+1.01.00 у PostItem.vue добавляем в метод deletePost this.$emit('post_deleted', this.post);
+1.02.41 у Client/Post/Index.vue добавляем @post_deleted=""
+1.03.04 далее добавляем в Client/Post/Index.vue метод refreshPosts
+1.03.28 добавляем в data() для реактивности постов postsData, она у меня уже есть
+1.03.53 в метод refreshPosts добавляем this.postsData = this.postsData.filter(postData => postData !== post)
+1.04.42 проверяем в браузере - не работает рефреш
+1.05.20 вставили refreshPosts у @post_deleted и заработало
+1.06.19 про глобальный евент задание мега сеньерское
+1.13.10 домашка
+```
+
+Что сделал по уроку:
+
+2) сбросил кеши роутов т.к. не хотела работать авторизация которую прописал в роутах
+   php artisan route:cache
+2) сделал рабочую бесплатную временную почту для тестов в один клик
+   https://temp-mail.org/
+   и прописал емайл этот у юзеря залогиненного. почта нормально доходит.
+3) закомментил в PostResource.php чтобы не прилетали сразу все комменты
+   'comments' => CommentResource::collection($this->whenLoaded('comments')),
+4) поправил getCommentsCountAttribute чтобы то что с нулл в paren_id считаем коревыми комментами
+5) поправил в Client/PostController.php indexComment
+6) добавил в Client/CommentController.php indexReplies для загрузки ответов к коментам
+7) в routes/client.php добавил роут для реплаев
+8) сделал php artisan make:mail StoredUniversalMail для отсылки почты
+9) в PostController прописал его в storeComment и в toggleLike для обоих участников
+10) в CommentController прописал его в storeReply и в toggleLike для обоих участников
+
 ============= 20 Client, Likes, API ==============
 
 Временные метки по видео предыдущего урока:

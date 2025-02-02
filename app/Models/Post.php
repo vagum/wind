@@ -9,7 +9,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 #[ObservedBy(PostObserver::class)]
 class Post extends Model
@@ -55,14 +57,24 @@ class Post extends Model
         return $this->profile->user();
     }
 
-    public function comments()
+    public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
     }
 
     public function getImageUrlAttribute(): ?string
     {
-       return $this->image_path ? Storage::disk('public')->url($this->image_path) : null;
+        if (!$this->image_path) {
+            return null;
+        }
+
+        // Если image_path уже содержит 'http', возвращаем его как есть.
+        if (Str::contains($this->image_path, 'http')) {
+            return $this->image_path;
+        }
+
+        // В противном случае генерируем URL через дисковое хранилище.
+        return Storage::disk('public')->url($this->image_path);
     }
 
     public function getIsLikedAttribute(): bool
@@ -86,7 +98,7 @@ class Post extends Model
 
     public function getCommentsCountAttribute(): int
     {
-        return $this->comments->count();
+        return $this->comments()->whereNull('parent_id')->count();
     }
 
 }

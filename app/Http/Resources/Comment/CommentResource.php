@@ -23,6 +23,8 @@ class CommentResource extends JsonResource
             'likes' => $this->likedProfiles()->count(), // Подсчет лайков,
             'created_at' => $this->created_at->toDateTimeString(),
             'comments_count' => $this->comments_count, // getCommentsCountAttribute в Models/Comment.php
+            'replies_count'  => $this->when(isset($this->replies_count), $this->replies_count),
+            'replies'        => CommentResource::collection($this->whenLoaded('replies')),
             'profile' => [
                 'id' => $this->profile->id,
                 'name' => $this->profile->name,

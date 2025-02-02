@@ -19,111 +19,16 @@
 
         <!-- Карточки постов -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div
+            <PostItem
                 v-for="post in postsData.data"
                 :key="post.id"
+                :post="post"
+                :auth="auth"
+                :format-date="formatDate"
+                @toggle-like="toggleLike"
+                @delete="openModal"
                 class="bg-white rounded-lg shadow-md overflow-hidden"
-            >
-                <!-- Изображение поста (отображается только если image_url существует) -->
-                <img
-                    v-if="post.image_url"
-                    :src="post.image_url"
-                    alt="Post Image"
-                    class="w-full h-48 object-cover"
-                    loading="lazy"
-                />
-
-                <div class="p-4">
-                    <!-- Заголовок поста -->
-                    <h2 class="text-xl font-semibold mb-2">
-                        <Link :href="route('clients.posts.show', post.id)">
-                            {{ post.title }}
-                        </Link>
-                    </h2>
-
-                    <!-- Описание поста -->
-                    <p class="text-gray-700 mb-4">
-                        {{ post.description }}
-                    </p>
-
-                    <!-- Информация о профайле -->
-                    <div class="flex items-center mb-4">
-                        <img
-                            :src="post.profile_name.avatar"
-                            alt="Profile Avatar"
-                            class="w-10 h-10 rounded-full mr-3"
-                        />
-                        <div>
-                            <p class="text-gray-900 font-medium">
-                                <Link :href="route('admin.profiles.show', post.profile_name.id)">
-                                {{ post.profile_name.name }}
-                                </Link>
-                            </p>
-                            <p class="text-gray-600 text-sm">{{ formatDate(post.published_at) }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Категория и теги -->
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">
-                            {{ post.category_title }}
-                        </span>
-                        <div class="flex flex-wrap">
-                            <span
-                                v-for="(tag, index) in post.tags_title"
-                                :key="index"
-                                class="bg-gray-200 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded"
-                            >
-                                {{ tag }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Лайки и действия -->
-                    <div class="flex items-center justify-between">
-                        <button @click="toggleLike(post.id)" class="flex items-center text-gray-700 focus:outline-none">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                :fill="post.is_liked ? 'red' : 'none'"
-                                viewBox="0 0 24 24"
-                                stroke-width="1.5"
-                                stroke="currentColor"
-                                class="w-6 h-6 mr-1"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
-                                />
-                            </svg>
-                            <span>{{ post.likes }}</span>
-                        </button>
-
-                        <!-- Комментарии -->
-                        <div class="flex items-center text-gray-700">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                :fill="post.comments_count ? '#D1D1D1' : 'none'"
-                                viewBox="0 0 24 24"
-                                stroke-width="1.5"
-                                stroke="currentColor"
-                                class="w-6 h-6 mr-1"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"
-                                />
-                            </svg>
-                            <span>{{ post.comments_count }}</span>
-                        </div>
-
-                        <Link :href="route('clients.posts.show', post.id)" class="text-blue-500 hover:underline">
-                            Read Post
-                        </Link>
-                    </div>
-                </div>
-            </div>
+            />
         </div>
 
         <!-- Индикатор загрузки -->
@@ -133,137 +38,162 @@
 
         <!-- Элемент для наблюдения за прокруткой -->
         <div ref="infiniteScrollTrigger" class="h-1"></div>
+
+        <!-- Модальное окно подтверждения удаления с анимацией -->
+        <transition name="modal">
+            <div v-if="isModalOpen" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div class="bg-white rounded-lg shadow-lg w-96 transform transition-all duration-300">
+                    <div class="px-6 py-4">
+                        <h2 class="text-xl font-semibold mb-2">Confirm Delete</h2>
+                        <p class="mb-2">Are you sure you want to delete:</p>
+                        <p><strong>{{ postToDelete.title }}</strong>?</p>
+                    </div>
+                    <div class="px-6 py-4 flex justify-end space-x-3">
+                        <button
+                            @click="closeModal"
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            @click="confirmDelete"
+                            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </transition>
     </div>
 </template>
 
 <script>
 import ClientLayout from "@/Layouts/Client/ClientLayout.vue";
+import PostItem from "@/Components/Post/PostItem.vue";
 import { Link } from "@inertiajs/vue3";
 import axios from "axios";
 
 /**
- * Функция инициализации начальных значений фильтров.
- * Проходимся по всем фильтрам (ключ: тип), читаем query-параметры из URL.
+ * Инициализация фильтров из query-параметров URL.
  */
 function initFiltersFromQuery(activeFilters) {
     const params = new URLSearchParams(window.location.search);
     const result = {};
-
-    // Пробегаемся по всем ключам из active_filters
-    for (const [fieldName, fieldType] of Object.entries(activeFilters)) {
-        // Если в query-параметрах есть значение, используем его, иначе пустая строка
+    for (const [fieldName] of Object.entries(activeFilters)) {
         result[fieldName] = params.get(fieldName) || "";
     }
-    // Отдельно обрабатываем page
     result.page = parseInt(params.get("page") || "1", 10);
-
     return result;
 }
 
 export default {
     name: "Index",
     layout: ClientLayout,
-
-    props: {
-        posts: Object,          // данные для таблицы (PostResource Collection)
-        active_filters: Object, // объект вида { title: 'text', content: 'text', ... }
-        auth: {
-            type: Object,
-            required: true
-        }
-    },
-
-    data() {
-        return {
-            // Инициализируем объект filter из URL-параметров, исходя из props.active_filters
-            filter: initFiltersFromQuery(this.active_filters),
-            postsData: this.posts || { data: [], meta: { links: [], pagination: {} } }, // либо данные из props, либо пустой объект
-            isLoading: false,      // Флаг загрузки данных
-            observer: null,        // Экземпляр IntersectionObserver
-            allLoaded: false,      // Флаг, указывающий, что все посты загружены
-        };
-    },
-
     components: {
         Link,
+        PostItem,
     },
+    props: {
+        posts: {
+            type: Object,
+            default: () => ({ data: [], meta: {} }),
+        },
+        active_filters: {
+            type: Object,
+            default: () => ({
+                title: "text",
+                description: "text",
+            }),
+        },
+        auth: {
+            type: Object,
+            required: true,
+        },
+    },
+    data() {
+        // Инициализируем фильтры
+        const initFilters = initFiltersFromQuery(this.active_filters);
 
+        // Если данные для первой страницы уже переданы, устанавливаем номер следующей страницы
+        if (
+            this.posts &&
+            this.posts.meta &&
+            this.posts.meta.current_page &&
+            this.posts.meta.last_page
+        ) {
+            // Если первая страница уже загружена, следующая страница равна current_page + 1,
+            // но если current_page уже последняя, то помечаем, что все данные загружены.
+            if (this.posts.meta.current_page < this.posts.meta.last_page) {
+                initFilters.page = this.posts.meta.current_page + 1;
+            } else {
+                initFilters.page = this.posts.meta.current_page;
+            }
+        }
+        return {
+            filter: initFilters,
+            postsData: this.posts || { data: [], meta: { links: [], pagination: {} } },
+            isLoading: false,
+            observer: null,
+            allLoaded:
+                this.posts &&
+                this.posts.meta &&
+                this.posts.meta.current_page &&
+                this.posts.meta.last_page &&
+                this.posts.meta.current_page >= this.posts.meta.last_page,
+            // Свойства для работы с модальным окном
+            isModalOpen: false,
+            postToDelete: {},
+        };
+    },
     mounted() {
-        // Если Inertia не передал посты (или решили сбрасывать), грузим данные вручную при первом монтировании
+        // Если данных для первой страницы нет, загружаем их.
         if (!this.postsData.data.length) {
             this.getPosts();
         }
         this.initInfiniteScroll();
     },
-
     beforeUnmount() {
-        // Отключаем наблюдатель при размонтировании компонента
         if (this.observer) {
             this.observer.disconnect();
         }
     },
-
     watch: {
-        /**
-         * Отслеживаем только номер страницы отдельно,
-         * чтобы при изменении фильтров не сбрасывать страницу в 1,
-         * а также не вызывать двойных запросов.
-         */
         "filter.page"(newVal, oldVal) {
             if (newVal !== oldVal && !this.allLoaded) {
                 this.getPosts();
             }
         },
     },
-
     methods: {
-        /**
-         * Срабатывает при вводе в любой фильтр (кроме page).
-         * Сбрасываем страницу и данные, обновляем URL и делаем запрос.
-         */
         onFilterInputChange() {
+            // При изменении фильтра сбрасываем пагинацию и данные
             this.filter.page = 1;
-            this.postsData.data = [];    // Очистить текущие посты
-            this.allLoaded = false;      // Сбросить флаг окончания загрузки
+            this.postsData.data = [];
+            this.allLoaded = false;
             this.updateUrl();
             this.getPosts();
         },
-
-        /**
-         * Обновляем адресную строку, формируем query-параметры только из непустых значений.
-         */
         updateUrl() {
             const params = new URLSearchParams();
-
-            // Пробегаемся по всем полям фильтра (кроме page и исключённых полей), чтобы записать непустые
-            for (const [fieldName, fieldType] of Object.entries(this.active_filters)) {
-                if (fieldName === 'image_url') continue; // Исключаем image_url из фильтров
+            for (const [fieldName] of Object.entries(this.active_filters)) {
                 if (this.filter[fieldName]) {
                     params.set(fieldName, this.filter[fieldName]);
                 }
             }
-
-            // Если страница не 1, тоже пишем в параметры
             if (this.filter.page && this.filter.page !== 1) {
                 params.set("page", this.filter.page);
             }
-
             const queryString = params.toString();
             const newUrl = queryString
                 ? `${window.location.pathname}?${queryString}`
                 : window.location.pathname;
-
-            window.history.replaceState({}, "", newUrl);
+            // Передаём null вместо реактивного объекта
+            window.history.replaceState(null, "", newUrl);
         },
-
-        /**
-         * Формируем объект для отправки на сервер (axios), исключая пустые поля и page=1.
-         */
         getRequestParams() {
             const result = {};
-
-            for (const [fieldName, fieldType] of Object.entries(this.active_filters)) {
-                if (fieldName === 'image_url') continue; // Исключаем image_url из фильтров
+            for (const [fieldName] of Object.entries(this.active_filters)) {
                 if (this.filter[fieldName]) {
                     result[fieldName] = this.filter[fieldName];
                 }
@@ -271,19 +201,11 @@ export default {
             if (this.filter.page && this.filter.page !== 1) {
                 result.page = this.filter.page;
             }
-
             return result;
         },
-
-        /**
-         * Запрашиваем посты через axios, передавая нужные query-параметры.
-         * При успешном ответе добавляем новые посты к существующим.
-         */
         getPosts() {
             if (this.isLoading || this.allLoaded) return;
-
             this.isLoading = true;
-
             axios
                 .get(route("clients.posts.index"), {
                     params: this.getRequestParams(),
@@ -292,18 +214,16 @@ export default {
                     const newPosts = res.data.data;
                     const currentPage = res.data.meta.current_page;
                     const lastPage = res.data.meta.last_page;
-
                     if (newPosts.length) {
-                        // Добавляем новые посты к существующим
+                        // Добавляем новые посты
                         this.postsData.data.push(...newPosts);
-                        // Обновляем номер следующей страницы
-                        this.filter.page = currentPage + 1;
-                        // Проверяем, достигли ли последней страницы
-                        if (currentPage >= lastPage) {
+                        // Если текущая страница меньше последней, увеличиваем номер страницы
+                        if (currentPage < lastPage) {
+                            this.filter.page = currentPage + 1;
+                        } else {
                             this.allLoaded = true;
                         }
                     } else {
-                        // Если новых постов нет, устанавливаем флаг окончания загрузки
                         this.allLoaded = true;
                     }
                 })
@@ -314,85 +234,95 @@ export default {
                     this.isLoading = false;
                 });
         },
-
-        /**
-         * Инициализируем бесконечную прокрутку с помощью IntersectionObserver.
-         */
         initInfiniteScroll() {
             const options = {
-                root: null,               // наблюдать относительно viewport
-                rootMargin: '0px',
-                threshold: 1.0             // вызывать когда элемент полностью виден
+                root: null,
+                rootMargin: "0px",
+                threshold: 1.0,
             };
-
             this.observer = new IntersectionObserver(this.handleIntersect, options);
             if (this.$refs.infiniteScrollTrigger) {
                 this.observer.observe(this.$refs.infiniteScrollTrigger);
             }
         },
-
-        /**
-         * Обработчик пересечения элемента-триггера с областью видимости.
-         * Если элемент виден, загружаем новые посты.
-         */
         handleIntersect(entries) {
             const entry = entries[0];
             if (entry.isIntersecting && !this.isLoading && !this.allLoaded) {
                 this.getPosts();
             }
         },
-
-        /**
-         * Переключение лайка для поста.
-         * @param {Number} postId - ID поста.
-         */
         toggleLike(postId) {
-            // Проверяем, аутентифицирован ли пользователь и если нет, то редирект на логин
             if (!this.auth.user) {
-                window.location.href = '/login';
+                window.location.href = "/login";
                 return;
             }
-
-            // Находим индекс поста в массиве
-            const postIndex = this.postsData.data.findIndex(p => p.id === postId);
+            const postIndex = this.postsData.data.findIndex((p) => p.id === postId);
             if (postIndex === -1) return;
-
             const post = this.postsData.data[postIndex];
-
-            // Оптимистическое обновление UI
-            const originalIsLiked = post.is_liked;
-            const originalLikes = post.likes;
-
-            post.is_liked = !post.is_liked;
-            post.likes += post.is_liked ? 1 : -1;
-
-            axios.post(route("posts.likes.toggle", postId))
+            // Если уже идёт запрос по этому посту, не обрабатываем повторный клик
+            if (post.isToggling) return;
+            post.isToggling = true;
+            axios
+                .post(route("posts.likes.toggle", postId))
                 .then((res) => {
-                    // Обновляем данные из ответа сервера для точности
+                    // Обновляем данные поста согласно ответу сервера
                     post.is_liked = res.data.is_liked;
                     post.likes = res.data.likes;
                 })
                 .catch((error) => {
-                    console.error('Ошибка при переключении лайка:', error);
-                    // Откатываем изменения в случае ошибки
-                    post.is_liked = originalIsLiked;
-                    post.likes = originalLikes;
+                    console.error("Ошибка при переключении лайка:", error);
+                })
+                .finally(() => {
+                    post.isToggling = false;
                 });
         },
-
-        /**
-         * Форматирование даты.
-         * @param {String} dateStr - Строка даты.
-         * @returns {String} Форматированная дата.
-         */
         formatDate(dateStr) {
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const options = {year: "numeric", month: "long", day: "numeric"};
             return new Date(dateStr).toLocaleDateString(undefined, options);
-        }
+        },
+        confirmDelete() {
+            if (!this.postToDelete || !this.postToDelete.id) return;
+            axios
+                .delete(route("clients.post.destroy", this.postToDelete.id))
+                .then(() => {
+                    this.postsData.data = this.postsData.data.filter(
+                        (post) => post.id !== this.postToDelete.id
+                    );
+                    this.closeModal();
+                })
+                .catch((error) => {
+                    console.error("Ошибка при удалении поста:", error);
+                    this.closeModal();
+                });
+        },
+        openModal(post) {
+            this.postToDelete = post;
+            this.isModalOpen = true;
+        },
+        closeModal() {
+            this.isModalOpen = false;
+            this.postToDelete = {};
+        },
     },
 };
 </script>
 
 <style scoped>
-/* Добавьте стили по необходимости */
+/* Стили для анимации модального окна */
+.modal-enter-active,
+.modal-leave-active {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+.modal-enter-to,
+.modal-leave-from {
+    opacity: 1;
+    transform: scale(1);
+}
 </style>

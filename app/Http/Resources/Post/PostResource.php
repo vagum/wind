@@ -33,7 +33,7 @@ class PostResource extends JsonResource
             'image_url' => $this->image_url,
             'is_liked' => $this->is_liked,
             'comments_count' => $this->comments_count,
-            'comments' => CommentResource::collection($this->whenLoaded('comments')),
+//            'comments' => CommentResource::collection($this->whenLoaded('comments')),
         ];
     }
 }

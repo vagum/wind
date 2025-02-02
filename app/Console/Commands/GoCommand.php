@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Events\Post\StoredPostEvent;
 use App\Events\Tag\BeforeStoreTagEvent;
 use App\Events\Tag\StoredTagEvent;
+use App\Mail\Comment\StoredCommentMail;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Image;
@@ -15,6 +16,7 @@ use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class GoCommand extends Command
 {
@@ -37,6 +39,8 @@ class GoCommand extends Command
      */
     public function handle()
     {
+        $user = User::first();
+        Mail::to($user)->send(new StoredCommentMail());
 
 // --------- с обсервером -----------
 
@@ -119,8 +123,8 @@ class GoCommand extends Command
 //        BeforeStoreTagEvent::dispatch();
 //        $tag = Tag::factory()->create();
 //        StoredTagEvent::dispatch($tag);
-
-        $post = Post::factory()->create();
-        Log::channel('post')->info('this is my {id} bla bla', ['id' => $post->id]);
+//
+//        $post = Post::factory()->create();
+//        Log::channel('post')->info('this is my {id} bla bla', ['id' => $post->id]);
     }
 }

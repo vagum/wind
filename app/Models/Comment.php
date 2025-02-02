@@ -48,13 +48,13 @@ class Comment extends Model
 
     }
 
-    /**
-     * Связь для ответов (реплаев) к этому комментарию.
-     */
-    public function replies(): HasMany
-    {
-        return $this->hasMany(Comment::class, 'parent_id')->with('replies', 'profile');
-    }
+//    /**
+//     * Связь для ответов (реплаев) к этому комментарию.
+//     */
+//    public function replies(): HasMany
+//    {
+//        return $this->hasMany(Comment::class, 'parent_id')->with('replies', 'profile');
+//    }
 
     /**
      * Связь для родительского комментария.
@@ -86,6 +86,14 @@ class Comment extends Model
     public function getCommentsCountAttribute(): int
     {
         return $this->post->comments->count();
+    }
+
+    /**
+     * Рекурсивное отношение для загрузки ответов (дочерних комментариев).
+     */
+    public function replies()
+    {
+        return $this->hasMany(Comment::class, 'parent_id');
     }
 
 }

@@ -7,8 +7,13 @@ use App\Http\Requests\Client\IndexRequest;
 use App\Http\Requests\Post\StoreCommentRequest;
 use App\Http\Resources\Comment\CommentResource;
 use App\Http\Resources\Post\PostResource;
+use App\Mail\Comment\StoredCommentMail;
+use App\Mail\StoredUniversalMail;
+use App\Models\Comment;
 use App\Models\Post;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Request;
 
 class PostController extends Controller
@@ -98,9 +103,51 @@ class PostController extends Controller
     public function storeComment(Post $post, StoreCommentRequest $request): array
     {
         $data = $request->validationData();
+
         $comment = auth()->user()->profile->comments()->create($data);
 
+        // Отправляем уведомление владельцу поста о новом комментарии
+        Mail::to($post->user->email)->send(
+            new StoredUniversalMail(
+                $post, // Модель поста
+                'Новый комментарий к вашему посту', // Тема письма
+                [
+                    'action'    => 'comment',
+                    'comment'   => $comment,
+                    'commenter' => auth()->user()->profile,
+                ]
+            )
+        );
+
+        // Отправляем уведомление автору комментария (подтверждение)
+        // Если автор комментария и владелец поста не совпадают
+        if (auth()->user()->email !== $post->user->email) {
+            Mail::to(auth()->user()->email)->send(
+                new StoredUniversalMail(
+                    $post,
+                    'Ваш комментарий успешно отправлен',
+                    [
+                        'action'  => 'comment_confirmation',
+                        'comment' => $comment,
+                    ]
+                )
+            );
+        }
+
         return CommentResource::make($comment)->resolve();
+    }
+
+    public function indexComment(Post $post): array
+    {
+
+        // Получаем только корневые комментарии с количеством ответов
+        $rootComments = $post->comments()
+            ->whereNull('parent_id')
+            ->withCount('replies')
+            ->with('profile') // если нужно для отображения автора
+            ->get();
+
+        return CommentResource::collection($rootComments)->resolve();
     }
 
     public function toggleLike(Post $post): JsonResponse
@@ -114,13 +161,38 @@ class PostController extends Controller
         // Получаем обновленное количество лайков
         $likesCount = $post->likedProfiles()->count();
 
-        // Получаем количество комментариев
-        $commentsCount = $post->comments()->count();
+        // Если лайк был добавлен, отправляем уведомление владельцу поста
+        if ($isLiked) {
+            // Здесь передаём модель поста, тему и дополнительные данные, например, кто поставил лайк
+            Mail::to($post->user->email)->send(
+                new StoredUniversalMail(
+                    $post, // Модель поста
+                    'Ваш пост получил новый лайк',
+                    [
+                        'action' => 'like',
+                        'liker' => auth()->user()->profile,
+                    ]
+                )
+            );
+        }
+
+        // Отправляем уведомление инициатору лайка (подтверждение), если он не является владельцем поста
+        if (auth()->user()->email !== $post->user->email) {
+            Mail::to(auth()->user()->email)->send(
+                new StoredUniversalMail(
+                    $post, // Передаём модель поста
+                    'Вы поставили лайк', // Тема письма для инициатора лайка
+                    [
+                        'action' => 'like_confirmation',
+                        'target' => $post,
+                    ]
+                )
+            );
+        }
 
         return response()->json([
             'is_liked' => $isLiked,
             'likes' => $likesCount,
-            'comments_count' => $commentsCount,
         ]);
 
     }
