@@ -7,13 +7,11 @@ use App\Http\Requests\Client\IndexRequest;
 use App\Http\Requests\Post\StoreCommentRequest;
 use App\Http\Resources\Comment\CommentResource;
 use App\Http\Resources\Post\PostResource;
-use App\Mail\Comment\StoredCommentMail;
-use App\Mail\StoredUniversalMail;
-use App\Models\Comment;
+use App\Jobs\Post\StoreCommentPostSendMailJob;
+use App\Jobs\Post\ToggleLikePostSendMailJob;
 use App\Models\Post;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
 
 class PostController extends Controller
@@ -48,6 +46,20 @@ class PostController extends Controller
 
     public function show(Post $post)
     {
+        // Определяем, есть ли залогиненный пользователь и, соответственно, его профиль
+        $profileId = null;
+        if (auth()->check() && auth()->user()->profile) {
+            $profileId = auth()->user()->profile->id;
+        }
+
+        // Вставляем новую запись в таблицу post_profile_views для каждого запроса
+        DB::table('post_profile_views')->insert([
+            'post_id'    => $post->id,
+            'profile_id' => $profileId, // если гость, то будет NULL
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $post = PostResource::make($post)->resolve();
         return inertia("Client/Post/Show", compact("post"));
     }
@@ -106,33 +118,7 @@ class PostController extends Controller
 
         $comment = auth()->user()->profile->comments()->create($data);
 
-        // Отправляем уведомление владельцу поста о новом комментарии
-        Mail::to($post->user->email)->send(
-            new StoredUniversalMail(
-                $post, // Модель поста
-                'Новый комментарий к вашему посту', // Тема письма
-                [
-                    'action'    => 'comment',
-                    'comment'   => $comment,
-                    'commenter' => auth()->user()->profile,
-                ]
-            )
-        );
-
-        // Отправляем уведомление автору комментария (подтверждение)
-        // Если автор комментария и владелец поста не совпадают
-        if (auth()->user()->email !== $post->user->email) {
-            Mail::to(auth()->user()->email)->send(
-                new StoredUniversalMail(
-                    $post,
-                    'Ваш комментарий успешно отправлен',
-                    [
-                        'action'  => 'comment_confirmation',
-                        'comment' => $comment,
-                    ]
-                )
-            );
-        }
+        StoreCommentPostSendMailJob::dispatch($post, $comment, auth()->user()->profile, auth()->user()->email)->onQueue('post-mail');
 
         return CommentResource::make($comment)->resolve();
     }
@@ -163,31 +149,7 @@ class PostController extends Controller
 
         // Если лайк был добавлен, отправляем уведомление владельцу поста
         if ($isLiked) {
-            // Здесь передаём модель поста, тему и дополнительные данные, например, кто поставил лайк
-            Mail::to($post->user->email)->send(
-                new StoredUniversalMail(
-                    $post, // Модель поста
-                    'Ваш пост получил новый лайк',
-                    [
-                        'action' => 'like',
-                        'liker' => auth()->user()->profile,
-                    ]
-                )
-            );
-        }
-
-        // Отправляем уведомление инициатору лайка (подтверждение), если он не является владельцем поста
-        if (auth()->user()->email !== $post->user->email) {
-            Mail::to(auth()->user()->email)->send(
-                new StoredUniversalMail(
-                    $post, // Передаём модель поста
-                    'Вы поставили лайк', // Тема письма для инициатора лайка
-                    [
-                        'action' => 'like_confirmation',
-                        'target' => $post,
-                    ]
-                )
-            );
+            ToggleLikePostSendMailJob::dispatch($post, auth()->user()->profile, auth()->user()->email)->onQueue('post-mail');
         }
 
         return response()->json([

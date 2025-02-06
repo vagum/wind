@@ -5,11 +5,15 @@ use App\Http\Controllers\Admin\CommentController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\StatsController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->middleware(['auth'])->group(function () {
+
+    Route::get('stats', [StatsController::class, 'index'])->name('admin.stats.index');
+
     Route::resource('categories', CategoryController::class, [
         'as' => 'admin',
         'only' => ['index', 'create', 'store', 'show']

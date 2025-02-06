@@ -13,6 +13,7 @@ use App\Models\Post;
 use App\Services\PostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -48,8 +49,23 @@ class PostController extends Controller
 
     public function show(Post $post): Response
     {
-        // Eager load comments и профили с пользователями
-        $post->load(['comments.profile.user']);
+
+        // Определяем, есть ли залогиненный пользователь и, соответственно, его профиль
+        $profileId = null;
+        if (auth()->check() && auth()->user()->profile) {
+            $profileId = auth()->user()->profile->id;
+        }
+
+        // Вставляем новую запись в таблицу post_profile_views для каждого запроса
+        DB::table('post_profile_views')->insert([
+            'post_id'    => $post->id,
+            'profile_id' => $profileId, // если гость, то будет NULL
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+//        // Eager load comments и профили с пользователями
+//        $post->load(['comments.profile.user']);
 
         // Преобразование поста в ресурс
         $postResource = PostResource::make($post)->resolve();

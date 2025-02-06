@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Events\Post\StoredPostEvent;
 use App\Events\Tag\BeforeStoreTagEvent;
 use App\Events\Tag\StoredTagEvent;
+use App\Jobs\Post\StoreCommentReplySendMailJob;
 use App\Mail\Comment\StoredCommentMail;
 use App\Models\Category;
 use App\Models\Comment;
@@ -39,8 +40,13 @@ class GoCommand extends Command
      */
     public function handle()
     {
-        $user = User::first();
-        Mail::to($user)->send(new StoredCommentMail());
+
+        dump(1111);
+
+//        SendMailJob::dispatch();
+
+//        $user = User::first();
+//        Mail::to($user)->send(new StoredCommentMail());
 
 // --------- с обсервером -----------
 

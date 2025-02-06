@@ -1,96 +1,100 @@
 Всё в старом проекте wind!
 
 Временные метки по видео предыдущего урока:
-23.02 закрываем миддлваром группу роутов в routes/client.php, чтобы могли смотреть посты только авторизованные
-      пользователи, чтобы не делать проверку на авторизацию везде и не получать ошибки.
-24.18 перешли в http://127.0.0.1:8000/admin/posts
-25.00 делаем php artisan make:mail Comment/StoredCommentMail
-25.35 делаем правки в app/Console/Commands/GoCommand.php
-26.28 редактируем Mail/Comment/StoredCommentMail.php
-27.33 смотрим доку https://laravel.su/docs/11.x/mail#generaciia-otpravlenii-s-razmetkoi-markdown
-28.01 делаем шаблон для емайлов php artisan make:view mail/comment/stored_comment
-28.43 вписываем путь до шаблона в StoredCommentMail.php
-29.26 переходим в GoCommand.php и выясняем что нам нужен почтовый сервак
-30.21 заходим на https://smtp.bz/panel/
-30.48 прописываем в .env данные по смтп серверу
-32.22 смотрим config/mail.php
-32.28 php artisan go
-33.10 смотри что отправлена почта на емайл пользователя который написал коммент.
-      для того чтобы её получить, надо вписать мыло рабочее пользователю.
-33.28 делаем правки в resources/views/mail/comment/stored_comment.blade.php
-34.21 делаем правки с Client/PostController.php
-34.39 смотрим есть ли profile у модели Post.php, у меня был
-35.06 проверяем есть ли user у модели Profile.php, у меня был
-35.27 добавляем в модель Post.php пользователя user, у меня был
-35.45 делаем правки в Client/PostController.php сокращаем до $post->user и прокидываем $post
-36.12 переходим в Mail/Comment/StoredCommentMail.php
-36.38 делаем правки в resources/views/mail/comment/stored_comment.blade.php
-37.02 идем в пост и делаем коммент http://127.0.0.1:8000/admin/posts/92
-37.30 вписываем реальную почту пользователю
-42.05 фронтовская тема которая будет связана с дз
-43.11 смотрим Client/Index.vue
-44.08 о том что нужно создать компонент
-44.32 создаем свой каталог для компоненов и компонент js/Components/Post/PostItem.vue
-45.09 копируем код из Client/Index.vue в js/Components/Post/PostItem.vue
-45.25 прокидываем переменные из родительского шаблона в PostItem.vue
-45.58 прописываем props в PostItem.vue
-46.25 про родственные связи между шаблонами
-47.52 идем в Client/Index.vue и там делаем импорт компонента import PostItem from "@/Components/Post/PostItem.vue";
-48.45 далее в components регистрируем PostItem
-48.54 вместо дива с постами в Client/Index.vue прописываем PostItem
-49.09 передаем посты с помощью :post="post" в компонент PostItem
-49.43 смотрим что получилось http://127.0.0.1:8000/posts
-50.16 далее смотрим отдельный пост http://127.0.0.1:8000/posts/92
-50.36 переходим в http://127.0.0.1:8000/admin/posts/92
-51.06 открываем Pages/Admin/Post/Show.vue
-51.32 у поста http://127.0.0.1:8000/admin/posts/92 комментарии должны открываться по кнопке
-51.47 вставляем эту кнопку в Pages/Admin/Post/Show.vue
-52.07 вставляем getComments в методы в Admin/Post/Show.vue
-52.33 вписываем в data() массив под comments
-52.50 делаем правки у кнопки которая загружает комменты
-53.47 далее правим у getComments .then
-54.01 делаем правку в роутах routes/client.php
-54.11 делаем правки в Client/PostController.php и делаем там indexComment
-54.32 проверяем есть ли comments у модели Post.php, у меня были
-55.20 смотрим в браузере и кликаем показать комменты http://127.0.0.1:8000/admin/posts/92
-55.33 в js/Components копируем /Post в /Comment
-56.01 переименовываем Components/Comment/PostItem.vue в CommentItem.vue
-56.04 делаем правки в Components/Comment/CommentItem.vue
-56.22 импортируем CommentItem.vue в Pages/Admin/Post/Show.vue и прописываем его в components
-56.46 вставляем в div CommentItem
-57.02 смотрим в браузере
-57.56 переходим в Post/PostItem.vue и добавляем кнопку удаления <a @click.prevent="deletePost" href="#">Delete</a>
-58.35 добавляем в методы deletePost
-59.07 переходим в routes/client.php и вставляем роут на удаление поста
-59.29 проверяем в Client/PostController.php что есть метод destroy, он там есть
-59.58 переходим в браузере на http://127.0.0.1:8000/posts
-1.00.31 проблема удаления поста у дочернего шаблона
-1.01.00 у PostItem.vue добавляем в метод deletePost this.$emit('post_deleted', this.post);
-1.02.41 у Client/Post/Index.vue добавляем @post_deleted=""
-1.03.04 далее добавляем в Client/Post/Index.vue метод refreshPosts
-1.03.28 добавляем в data() для реактивности постов postsData, она у меня уже есть
-1.03.53 в метод refreshPosts добавляем this.postsData = this.postsData.filter(postData => postData !== post)
-1.04.42 проверяем в браузере - не работает рефреш
-1.05.20 вставили refreshPosts у @post_deleted и заработало
-1.06.19 про глобальный евент задание мега сеньерское
-1.13.10 домашка
+23.11 идем в консолку GoCommand.php
+25.18 идем в PostController.php
+26.27 php artisan make:job Comment/SendMailJob
+27.00 смотрим Jobs/Comment/SendMailJob.php
+30.04 делаем там dd(11111);
+30.07 проверяем что есть таблицы в базе по умолчанию jobs, jobs_batches, failed_jobs
+30.41 прописываем в SendMailJob в GoCommand.php
+30.46 php artisan go
+31.03 пояснения по объекту который появился в таблице jobs
+33.18 смотрим справку по php artisan queue
+34.12 php artisan queue:work
+35.43 смотри failed_jobs таблицу
+36.26 про что что ддэшка всегда 500 ошибка
+36.37 переходим в Http/Client/PostController.php
+37.37 http://127.0.0.1:8000/admin/posts/94
+38.24 делаем правки в Admin/Post/Show.vue
+38.54 смотрим в браузере как добавление комментов происходит с задержкой
+39.12 идем в Client/PostController.php
+39.27 идем в Post.php и у метода comments делаем сортировку ->latest(), чтобы поменять сортировку
+39.31 смотрим задержу при добавлении коммента к посту http://127.0.0.1:8000/admin/posts/94
+39.41 копируем и GoCommand.php SendMailJob::dispatch(); в Client/PostController.php на место отсылки почты
+39.51 в SendMailJob.php прописываем удаленный кусок из Client/PostController.php
+      и в конструктор пишем Post $post
+40.13 в Client/PostController.php добавляем $post в скобки SendMailJob::dispatch($post);
+40.24 смотрим в браузере добавление коммента http://127.0.0.1:8000/admin/posts/94
+41.17 добавляем еще один коммент чтобы скопилось 2 в очереди в jobs
+41.40 php artisan queue:work
+41.42 получили FAIL
+41.52 смотри в таблице failed_jobs в чем дело
+42.33 еще один хороший пример почему ошибка
+43.29 смотрим что письмо дошло
+43.39 смотрим что есть еще по php artisan queue:listen
+44.25 php artisan queue:worker --help , про настройки памяти и т.д. и про то что всёравно он будет падать ЛОКАЛЬНО
+45.48 поэтому локально если надо запускаем php artisan queue:listen который жесткий тип и не падает
+46.12 но на проде будем всёравно использовать php artisan queue:work
+46.22 в Client/PostController.php задаем имя джобы ->onQueue('send-mail')
+46.49 не видит джобу которая с именем не default, чтобы увидел то что не default надо
+      php artisan queue:work --queue=имя-джобы, у меня
+      php artisan queue:work --queue=post-mail
+      нужно это для того, чтобы можно было потоки джобов запускать по разному
+47.48 смотрим доку по установке супервизора на рабочем сервере
+      https://laravel.su/docs/11.x/queues#konfiguraciia-supervisor
+48.48 про то как воркер падает и его перезапускает супервизор если он упал
+52.29 как запускать супервизора с laravel-worker:*
+52.56 переходим в GoCommand.php, там делаем dump(1111);
+53.20 настраиваем ПЛАНИРОВЩИК, для этого в идем в routes/console.php
+53.31 прописываем в routes/console.php строку Schedule::command('go')->everySecond();
+54.25 смотрим доку https://laravel.su/docs/11.x/scheduling#parametry-periodicnosti-raspisaniia
+55.01 php artisan schedule:list
+56.00 смотрим команды php artisan schedule
+56.13 php artisan schedule:run
+56.40 про то что на сервере надо будет запускать через кронтаб
+59.01 вопрос про то как понять что надо пихать в джобы, а что нет.
+1.01.31 вопрос про перезапуск джобы
+1.02.36 вопрос про как получить данные с процесса который запустил джоб,
+        чтобы когда отработает нарисовать SUCCESS на фронте
+1.04.36 домашка первая часть - комменты и сердечки через джобы
+1.05.23 домашка вторая часть
 
 
-Что сделал по уроку:
-1) сбросил кеши роутов т.к. не хотела работать авторизация которую прописал в роутах
-   php artisan route:cache
-2) сделал рабочую бесплатную временную почту для тестов в один клик
-   https://temp-mail.org/
-   и прописал емайл этот у юзеря залогиненного. почта нормально доходит.
-3) закомментил в PostResource.php чтобы не прилетали сразу все комменты
-   'comments' => CommentResource::collection($this->whenLoaded('comments')),
-4) поправил getCommentsCountAttribute чтобы то что с нулл в paren_id считаем коревыми комментами
-5) поправил в Client/PostController.php indexComment
-6) добавил в Client/CommentController.php indexReplies для загрузки ответов к коментам
-7) в routes/client.php добавил роут для реплаев
-8) сделал php artisan make:mail StoredUniversalMail для отсылки почты
-9) в PostController прописал его в storeComment и в toggleLike для обоих участников
-10) в CommentController прописал его в storeReply и в toggleLike для обоих участников
+Что сделал:
+1) Переименовал SendMailJob в Post/StoreCommentPostSendMailJob
+2) Добавил:
+   Comment/StoreCommentReplySendMailJob
+   Post/ToggleLikePostSendMailJob
+   Comment/ToggleLikeCommentSendMailJob
+3) Запуск джобов:
+   Для Post - php artisan queue:work --queue=post-mail
+   Для Comment - php artisan queue:work --queue=comment-mail
+4) Сделал модель, фабрику, миграцию и контроллер коммандой
+    php artisan make:model Stats -mfc
+5) Контроллер перенес в Admin/StatsController.php
+6) Добавил роут для статов в routes/admin.php и сбросил кеш роутов php artisan route:cache
+7) Добавил в Admin/AdminLayout.vue ссылку на страницу статов
+8) Сделал нулабельным profile_id в post_profile_views чтобы от неавторизированных пользователей считать views
+   php artisan make:migration make_profile_id_nullable_in_post_profile_views_table
+9) сделал php artisan migrate
+10) добавил в метод show в Client/PostController.php сохранение просмотров
+11) добавил getViewsCountAttribute в модель Post.php и PostResource.php соответственно
+12) добавил ->withTimestamps(); у метода likedProfiles у модели Post и Comment, т.к. toggle не ставил время лайка.
+13) сделал консолку чтобы собрать данные за все даты что есть
+    php artisan make:command AggregateFullStatsCommand
+14) проверил php artisan stats:aggregate-all-dates
+15) добавил в планировщик в routes/console.php и проверил что добавилось
+    php artisan schedule:list
+    время надо минус 3 часа от нашего, чтобы сработало в настоящий момент
+16) запустил планировщик в новом окне терминала, иначе не запускается ничего:
+    php artisan schedule:work
+17) сделал ресурс и реквест для статов, чтобы работали фильтры
+18) добавил трейт /Traits/Stats/HasFilter как use HasFilter; в модель Stats.php
+19) добавил в модель $casts = ['date' => 'datetime']; чтобы отформатировать дату в ресурсе
+20) добавил в StatsResource ограничения на кол-во знаков после запятой там где делили типа
+    'likes_views' => number_format($this->likes_views,2),
+21) добавил глазик везде в шаблоны VUE, показывающий кол-во просмотров у постов
 
 
 

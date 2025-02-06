@@ -5,10 +5,9 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\StoreCommentCommentRequest;
 use App\Http\Resources\Comment\CommentResource;
-use App\Mail\Comment\StoredCommentReplyMail;
-use App\Mail\StoredUniversalMail;
+use App\Jobs\Comment\StoreCommentReplySendMailJob;
+use App\Jobs\Comment\ToggleLikeCommentSendMailJob;
 use App\Models\Comment;
-use Illuminate\Support\Facades\Mail;
 
 class CommentController extends Controller
 {
@@ -31,31 +30,7 @@ class CommentController extends Controller
 
         // Если лайк был добавлен, отправляем уведомление владельцу комментария
         if ($isLiked) {
-            Mail::to($comment->user->email)->send(
-                new StoredUniversalMail(
-                    $comment, // Передаём модель комментария
-                    'Ваш комментарий получил новый лайк', // Тема письма
-                    [
-                        'action' => 'like',
-                        'liker'  => auth()->user()->profile,
-                    ]
-                )
-            );
-        }
-
-        // Отправляем уведомление инициатору лайка
-        // Если инициатор и владелец не совпадают
-        if (auth()->user()->email !== $comment->user->email) {
-            Mail::to(auth()->user()->email)->send(
-                new StoredUniversalMail(
-                    $comment, // Модель комментария
-                    'Вы поставили лайк', // Тема письма для инициатора
-                    [
-                        'action' => 'like_confirmation',
-                        'target' => $comment,
-                    ]
-                )
-            );
+            ToggleLikeCommentSendMailJob::dispatch($comment, auth()->user()->profile, auth()->user()->email)->onQueue('comment-mail');
         }
 
         return response()->json([
@@ -81,34 +56,7 @@ class CommentController extends Controller
             'post_id' => $comment->post_id,
         ]);
 
-        // Отправляем уведомление владельцу комментария о новом ответе
-        Mail::to($comment->user->email)->send(
-            new StoredUniversalMail(
-                $comment, // Передаем исходный комментарий, к которому добавлен ответ
-                          // (можно также передать сам ответ, если так удобнее)
-                'Новый ответ на ваш комментарий', // Тема письма
-                [
-                    'action'   => 'reply',
-                    'reply'    => $reply,
-                    'replier'  => auth()->user()->profile,
-                ]
-            )
-        );
-
-        // Отправляем уведомление инициатору ответа (подтверждение)
-        // Если инициатор и владелец комментария не совпадают
-        if (auth()->user()->email !== $comment->user->email) {
-            Mail::to(auth()->user()->email)->send(
-                new StoredUniversalMail(
-                    $comment,
-                    'Ваш ответ успешно отправлен',
-                    [
-                        'action' => 'reply_confirmation',
-                        'reply'  => $reply,
-                    ]
-                )
-            );
-        }
+        StoreCommentReplySendMailJob::dispatch($comment, $reply, auth()->user()->profile, auth()->user()->email)->onQueue('comment-mail');
 
         return CommentResource::make($reply)->resolve();
     }

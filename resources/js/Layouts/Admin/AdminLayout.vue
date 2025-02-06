@@ -29,6 +29,7 @@ export default {
                     <li class="text-gray-600 hover:text-blue-500 cursor-pointer"><Link :href="route(`admin.categories.index`)">Categories</Link></li>
                     <li class="text-gray-600 hover:text-blue-500 cursor-pointer"><Link :href="route(`admin.tags.index`)">Tags</Link></li>
                     <li class="text-gray-600 hover:text-blue-500 cursor-pointer"><Link :href="route(`admin.roles.index`)">Roles</Link></li>
+                    <li class="text-gray-600 hover:text-blue-500 cursor-pointer"><Link :href="route(`admin.stats.index`)">Stats</Link></li>
                 </ul>
             </aside>
 

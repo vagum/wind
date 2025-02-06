@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -38,9 +39,9 @@ class Post extends Model
 
     public function likedProfiles()
     {
-        return $this->morphToMany(Profile::class,'likeable');
+        return $this->morphToMany(Profile::class,'likeable')->withTimestamps();
 
-}
+    }
 
     public function viewedProfiles(): BelongsToMany
     {
@@ -99,6 +100,13 @@ class Post extends Model
     public function getCommentsCountAttribute(): int
     {
         return $this->comments()->whereNull('parent_id')->count();
+    }
+
+    public function getViewsCountAttribute(): int
+    {
+        return DB::table('post_profile_views')
+            ->where('post_id', $this->id)
+            ->count();
     }
 
 }

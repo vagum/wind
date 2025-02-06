@@ -25,7 +25,7 @@ class PostResource extends JsonResource
             'content' => $this->content,
             'description' => $this->description,
             'published_at' => $this->published_at,
-            'views' => $this->viewedProfiles()->count(), // Подсчет просмотров,
+            'views' => $this->views_count, // Используем getViewsCountAttribute в модели Post.php
             'likes' => $this->likedProfiles()->count(), // Подсчет лайков,
             'category_title' => CategoryResource::make($this->category)->resolve()['title'],
             'profile_name' => ProfileResource::make($this->profile)->resolve(),

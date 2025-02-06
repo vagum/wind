@@ -23,8 +23,8 @@
         <!-- Действия с постом: Лайк и счетчик комментариев -->
         <div class="w-1/2 mb-6">
             <div class="flex items-center justify-between">
-                <!-- Лайк -->
-                <button @click="toggleLike" class="flex items-center text-gray-700 focus:outline-none">
+                <!-- Лайк поста -->
+                <button @click="toggleLike" type="button" class="flex items-center text-gray-700 focus:outline-none">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         :fill="post.is_liked ? 'red' : 'none'"
@@ -41,6 +41,25 @@
                     </svg>
                     <span>{{ post.likes }}</span>
                 </button>
+
+                <!-- Просмотры -->
+                <div class="flex items-center text-gray-700">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        :fill="post.views ? '#73FBFD' : 'none'"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="w-6 h-6 mr-1"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                        />
+                    </svg>
+                    <span>{{ post.views }}</span>
+                </div>
 
                 <!-- Комментарии -->
                 <div class="flex items-center text-gray-700">
@@ -68,7 +87,7 @@
             <h3 class="text-xl font-semibold mb-4">Comments</h3>
 
             <!-- Форма добавления комментария -->
-            <div class="mb-6">
+            <div v-if="this.auth && this.auth.user" class="mb-6">
                 <h4 class="text-lg font-medium mb-2">Add Comment</h4>
                 <div class="flex flex-col items-start space-y-3">
           <textarea
@@ -86,6 +105,7 @@
                     </p>
                     <button
                         @click.prevent="storeComment"
+                        type="button"
                         class="w-full md:w-1/2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         Save Comment
@@ -97,6 +117,7 @@
             <div v-if="post.comments_count" class="flex items-center mb-4">
                 <button
                     @click.prevent="getComments"
+                    type="button"
                     class="w-full md:w-1/6 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-blue-500 flex justify-center items-center"
                 >
                     Comments
@@ -108,12 +129,15 @@
             <div v-else class="text-gray-500">No Comments</div>
 
             <!-- Вывод списка корневых комментариев -->
-            <!-- Если пользователь добавил комментарий, то массив comments становится непустым и отображается -->
             <div v-if="comments.length" class="w-full md:w-1/2 space-y-4">
                 <CommentItem
                     v-for="(commentItem, index) in comments"
                     :key="commentItem.id"
+                    :auth="auth"
                     :comment="commentItem"
+                    @toggle-comment-like="handleToggleCommentLike"
+                    @store-reply="handleStoreReply"
+                    @load-replies="handleLoadReplies"
                 />
             </div>
         </div>
@@ -131,14 +155,17 @@ export default {
     layout: AdminLayout,
     props: {
         post: Object,
+        auth: {
+            type: Object,
+            required: true,
+        },
     },
     data() {
         return {
             comment: {
                 content: "",
             },
-            // Массив корневых комментариев; даже если пользователь не нажал кнопку "Comments",
-            // после добавления комментария он заполнится и отобразится
+            // Массив корневых комментариев
             comments: [],
             errors: {},
         };
@@ -149,10 +176,14 @@ export default {
     },
     methods: {
         toggleLike() {
+            if (!this.auth.user) {
+                window.location.href = "/login";
+                return;
+            }
+
             axios
                 .post(route("posts.likes.toggle", this.post.id))
                 .then((response) => {
-                    // Ожидается, что сервер возвращает объект с полями is_liked и likes
                     this.post.is_liked = response.data.is_liked;
                     this.post.likes = response.data.likes;
                 })
@@ -167,14 +198,11 @@ export default {
                 };
                 return;
             }
-
             axios
                 .post(route("posts.comments.store", this.post.id), this.comment)
                 .then((response) => {
                     const newComment = response.data;
-                    // Добавляем новый комментарий в начало массива, чтобы он сразу отобразился
                     this.comments.unshift(newComment);
-                    // Обновляем счетчик комментариев (на сервере он увеличился)
                     this.post.comments_count++;
                     this.comment.content = "";
                     this.errors = {};
@@ -199,10 +227,101 @@ export default {
                     console.error("Ошибка при получении комментариев:", error);
                 });
         },
+
+        // Обработчик клика по лайку комментария
+        handleToggleCommentLike(commentId) {
+            axios
+                .post(route("comments.likes.toggle", commentId))
+                .then((response) => {
+                    // Обновляем комментарий в массиве (рекурсивно)
+                    this.updateCommentInList(commentId, response.data);
+                })
+                .catch((error) => {
+                    console.error("Ошибка при обновлении лайка комментария:", error);
+                });
+        },
+
+        // Обработчик добавления ответа к комментарию
+        handleStoreReply({ commentId, content }) {
+            axios
+                .post(route("comments.replies.store", commentId), { content })
+                .then((response) => {
+                    const newReply = response.data;
+                    this.addReplyToComment(this.comments, commentId, newReply);
+                })
+                .catch((error) => {
+                    console.error("Ошибка при добавлении ответа:", error);
+                });
+        },
+
+        // Обработчик загрузки ответов для комментария
+        handleLoadReplies(commentId) {
+            axios
+                .get(route("comments.replies.index", commentId))
+                .then((response) => {
+                    this.updateRepliesForComment(this.comments, commentId, response.data);
+                })
+                .catch((error) => {
+                    console.error("Ошибка при загрузке ответов:", error);
+                });
+        },
+
+        // Рекурсивное обновление комментария по ID
+        updateCommentInList(commentId, updatedData) {
+            const updateRecursively = (comments) => {
+                comments.forEach((comment) => {
+                    if (comment.id === commentId) {
+                        Object.assign(comment, updatedData);
+                    }
+                    if (comment.replies && comment.replies.length) {
+                        updateRecursively(comment.replies);
+                    }
+                });
+            };
+            updateRecursively(this.comments);
+        },
+
+        // Рекурсивное добавление ответа в нужный комментарий
+        addReplyToComment(comments, commentId, newReply) {
+            for (let comment of comments) {
+                if (comment.id === commentId) {
+                    // Если свойство replies отсутствует, добавляем его
+                    if (!comment.replies) {
+                        // Благодаря реактивности Vue 3, можно присвоить новое свойство
+                        comment.replies = [];
+                    }
+                    comment.replies.unshift(newReply);
+                    // Обновляем количество ответов
+                    comment.replies_count = (comment.replies_count || 0) + 1;
+                    // Отображаем ответы
+                    comment.showReplies = true;
+                    return true;
+                }
+                if (comment.replies && comment.replies.length) {
+                    if (this.addReplyToComment(comment.replies, commentId, newReply)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        },
+
+        // Рекурсивное обновление ответов для комментария по ID
+        updateRepliesForComment(comments, commentId, replies) {
+            for (let comment of comments) {
+                if (comment.id === commentId) {
+                    comment.replies = replies;
+                    comment.showReplies = true;
+                    return true;
+                }
+                if (comment.replies && comment.replies.length) {
+                    if (this.updateRepliesForComment(comment.replies, commentId, replies)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        },
     },
 };
 </script>
-
-<style scoped>
-/* Дополнительные стили по необходимости */
-</style>

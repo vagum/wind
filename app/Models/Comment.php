@@ -44,7 +44,7 @@ class Comment extends Model
 
     public function likedProfiles()
     {
-        return $this->morphToMany(Profile::class,'likeable');
+        return $this->morphToMany(Profile::class,'likeable')->withTimestamps();
 
     }
 
