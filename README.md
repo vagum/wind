@@ -8,6 +8,106 @@ https://github.com/vagum/windclient
 
 https://github.com/vagum/wind/blob/main/Wind.postman_collection.json
 
+============= 22 Queue Job Shedule =============
+
+Временные метки по видео предыдущего урока:
+```
+23.11 идем в консолку GoCommand.php
+25.18 идем в PostController.php
+26.27 php artisan make:job Comment/SendMailJob
+27.00 смотрим Jobs/Comment/SendMailJob.php
+30.04 делаем там dd(11111);
+30.07 проверяем что есть таблицы в базе по умолчанию jobs, jobs_batches, failed_jobs
+30.41 прописываем в SendMailJob в GoCommand.php
+30.46 php artisan go
+31.03 пояснения по объекту который появился в таблице jobs
+33.18 смотрим справку по php artisan queue
+34.12 php artisan queue:work
+35.43 смотри failed_jobs таблицу
+36.26 про что что ддэшка всегда 500 ошибка
+36.37 переходим в Http/Client/PostController.php
+37.37 http://127.0.0.1:8000/admin/posts/94
+38.24 делаем правки в Admin/Post/Show.vue
+38.54 смотрим в браузере как добавление комментов происходит с задержкой
+39.12 идем в Client/PostController.php
+39.27 идем в Post.php и у метода comments делаем сортировку ->latest(), чтобы поменять сортировку
+39.31 смотрим задержу при добавлении коммента к посту http://127.0.0.1:8000/admin/posts/94
+39.41 копируем и GoCommand.php SendMailJob::dispatch(); в Client/PostController.php на место отсылки почты
+39.51 в SendMailJob.php прописываем удаленный кусок из Client/PostController.php
+и в конструктор пишем Post $post
+40.13 в Client/PostController.php добавляем $post в скобки SendMailJob::dispatch($post);
+40.24 смотрим в браузере добавление коммента http://127.0.0.1:8000/admin/posts/94
+41.17 добавляем еще один коммент чтобы скопилось 2 в очереди в jobs
+41.40 php artisan queue:work
+41.42 получили FAIL
+41.52 смотри в таблице failed_jobs в чем дело
+42.33 еще один хороший пример почему ошибка
+43.29 смотрим что письмо дошло
+43.39 смотрим что есть еще по php artisan queue:listen
+44.25 php artisan queue:worker --help , про настройки памяти и т.д. и про то что всёравно он будет падать ЛОКАЛЬНО
+45.48 поэтому локально если надо запускаем php artisan queue:listen который жесткий тип и не падает
+46.12 но на проде будем всёравно использовать php artisan queue:work
+46.22 в Client/PostController.php задаем имя джобы ->onQueue('send-mail')
+46.49 не видит джобу которая с именем не default, чтобы увидел то что не default надо
+php artisan queue:work --queue=имя-джобы, у меня
+php artisan queue:work --queue=post-mail
+нужно это для того, чтобы можно было потоки джобов запускать по разному
+47.48 смотрим доку по установке супервизора на рабочем сервере
+https://laravel.su/docs/11.x/queues#konfiguraciia-supervisor
+48.48 про то как воркер падает и его перезапускает супервизор если он упал
+52.29 как запускать супервизора с laravel-worker:*
+52.56 переходим в GoCommand.php, там делаем dump(1111);
+53.20 настраиваем ПЛАНИРОВЩИК, для этого в идем в routes/console.php
+53.31 прописываем в routes/console.php строку Schedule::command('go')->everySecond();
+54.25 смотрим доку https://laravel.su/docs/11.x/scheduling#parametry-periodicnosti-raspisaniia
+55.01 php artisan schedule:list
+56.00 смотрим команды php artisan schedule
+56.13 php artisan schedule:run
+56.40 про то что на сервере надо будет запускать через кронтаб
+59.01 вопрос про то как понять что надо пихать в джобы, а что нет.
+1.01.31 вопрос про перезапуск джобы
+1.02.36 вопрос про как получить данные с процесса который запустил джоб,
+чтобы когда отработает нарисовать SUCCESS на фронте
+1.04.36 домашка первая часть - комменты и сердечки через джобы
+1.05.23 домашка вторая часть
+```
+
+Что сделал:
+
+1) Переименовал SendMailJob в Post/StoreCommentPostSendMailJob
+2) Добавил:
+   Comment/StoreCommentReplySendMailJob
+   Post/ToggleLikePostSendMailJob
+   Comment/ToggleLikeCommentSendMailJob
+3) Запуск джобов:
+   Для Post - php artisan queue:work --queue=post-mail
+   Для Comment - php artisan queue:work --queue=comment-mail
+4) Сделал модель, фабрику, миграцию и контроллер коммандой
+   php artisan make:model Stats -mfc
+5) Контроллер перенес в Admin/StatsController.php
+6) Добавил роут для статов в routes/admin.php и сбросил кеш роутов php artisan route:cache
+7) Добавил в Admin/AdminLayout.vue ссылку на страницу статов
+8) Сделал нулабельным profile_id в post_profile_views чтобы от неавторизированных пользователей считать views
+   php artisan make:migration make_profile_id_nullable_in_post_profile_views_table
+9) сделал php artisan migrate
+10) добавил в метод show в Client/PostController.php сохранение просмотров
+11) добавил getViewsCountAttribute в модель Post.php и PostResource.php соответственно
+12) добавил ->withTimestamps(); у метода likedProfiles у модели Post и Comment, т.к. toggle не ставил время лайка.
+13) сделал консолку чтобы собрать данные за все даты что есть
+    php artisan make:command AggregateFullStatsCommand
+14) проверил php artisan stats:aggregate-all-dates
+15) добавил в планировщик в routes/console.php и проверил что добавилось
+    php artisan schedule:list
+    время надо минус 3 часа от нашего, чтобы сработало в настоящий момент
+16) запустил планировщик в новом окне терминала, иначе не запускается ничего:
+    php artisan schedule:work
+17) сделал ресурс и реквест для статов, чтобы работали фильтры
+18) добавил трейт /Traits/Stats/HasFilter как use HasFilter; в модель Stats.php
+19) добавил в модель $casts = ['date' => 'datetime']; чтобы отформатировать дату в ресурсе
+20) добавил в StatsResource ограничения на кол-во знаков после запятой там где делили типа
+    'likes_views' => number_format($this->likes_views,2),
+21) добавил глазик везде в шаблоны VUE, показывающий кол-во просмотров у постов
+
 =========== 21 Mail Components Emit Props =========
 
 Временные метки по видео предыдущего урока:
