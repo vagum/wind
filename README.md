@@ -88,6 +88,8 @@ https://github.com/vagum/wind/blob/main/Wind.postman_collection.json
     Gate::authorize('update', $comment); и Gate::authorize('delete', $comment); соответсвенно
 17) поправил UserResource.php на проверку существования profile, т.к. какие-то профайлы удалили, а они прикреплены
     к пользователям и в итоге в разделе Users возникала ошибка про null в id
+18) добавил отображение ошибки о неавторизованной попытке отредактировать пост в Admin/Posts/Edit.vue
+    в .catch((error) this.errorMessage = error.response.data.message; в axios запросе на апдейт поста
 
 ============= 22 Queue Job Shedule =============
 

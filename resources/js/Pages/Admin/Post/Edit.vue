@@ -31,7 +31,7 @@ export default {
                     published_at: this.post.published_at
                         ? new Date(this.post.published_at).toISOString().split('T')[0]
                         : '',
-                    image: null, // Добавлено поле для нового изображения
+                    image: null, // Новое поле для загрузки изображения
                 },
                 tags: this.post.tags_title ? this.post.tags_title.join(', ') : '',
             },
@@ -47,16 +47,17 @@ export default {
                         : '',
                 },
             },
-            originalTags: this.post.tags_title ? this.post.tags_title.join(', ') : '', // Изменено на строку
-            errors: {}, // Для хранения ошибок
-            isSuccess: false,
-            editedPost: null,
+            originalTags: this.post.tags_title ? this.post.tags_title.join(', ') : '',
+            errors: {},        // Ошибки валидации
+            isSuccess: false,  // Флаг успешного обновления
+            editedPost: null,  // Обновлённые данные поста
+            errorMessage: '',  // Сообщение об ошибке (например, неавторизованный доступ)
             ignoreEntriesWatch: false,
         };
     },
 
     watch: {
-        // Следим за изменениями в пропсе 'post' и обновляем внутренние данные
+        // Следим за изменениями в prop 'post' для обновления данных
         post: {
             handler(newPost) {
                 this.entries.post = {
@@ -68,7 +69,7 @@ export default {
                     published_at: newPost.published_at
                         ? new Date(newPost.published_at).toISOString().split('T')[0]
                         : '',
-                    image: null, // Сбрасываем новое изображение
+                    image: null,
                 };
                 this.entries.tags = newPost.tags_title ? newPost.tags_title.join(', ') : '';
                 this.originalEntries.post = { ...this.entries.post };
@@ -77,7 +78,7 @@ export default {
             immediate: true,
             deep: true,
         },
-        // Следим за изменениями в 'entries' для сброса флага успеха
+        // При изменении любых полей формы сбрасываем сообщение об успехе и ошибке
         entries: {
             deep: true,
             handler(newVal, oldVal) {
@@ -87,6 +88,9 @@ export default {
                 }
                 if (this.isSuccess) {
                     this.isSuccess = false;
+                }
+                if (this.errorMessage) {
+                    this.errorMessage = '';
                 }
             },
         },
@@ -99,10 +103,10 @@ export default {
         },
 
         /**
-         * Проверяет, равны ли две строки тегов независимо от порядка элементов.
-         * @param {String} str1 - Первая строка тегов.
-         * @param {String} str2 - Вторая строка тегов.
-         * @returns {Boolean} - Возвращает true, если строки тегов равны, иначе false.
+         * Сравнение строк тегов без учёта порядка элементов.
+         * @param {String} str1
+         * @param {String} str2
+         * @returns {Boolean}
          */
         tagsEqual(str1, str2) {
             const a1 = str1.split(',').map(tag => tag.trim()).filter(tag => tag);
@@ -117,46 +121,37 @@ export default {
         },
 
         /**
-         * Обрабатывает отправку формы редактирования поста.
+         * Обработка отправки формы редактирования поста.
          */
         editPost() {
             const formData = new FormData();
 
-            // Список обязательных полей, которые всегда должны отправляться
-            const requiredPostFields = ['title']; // указываем через запятую или пустой массив если нет обязательных
-
-            // Добавляем обязательные поля в formData
+            // Добавляем обязательное поле title
+            const requiredPostFields = ['title'];
             requiredPostFields.forEach(field => {
                 formData.append(`post[${field}]`, this.entries.post[field]);
             });
 
-            // Обработка изображения, если оно изменилось
+            // Если выбрано новое изображение – добавляем его
             if (this.entries.post.image) {
                 formData.append('post[image]', this.entries.post.image);
             }
 
-            // Обрабатываем теги только если они изменились
+            // Обработка тегов: отправляем только если изменились
             const currentTags = this.entries.tags
                 .split(',')
                 .map(tag => tag.trim())
-                .filter(tag => tag); // Убираем пустые строки
-            const originalTags = this.originalTags
-                .split(',')
-                .map(tag => tag.trim())
                 .filter(tag => tag);
-
-            // Сравниваем текущие и исходные теги независимо от порядка
             const tagsHaveChanged = !this.tagsEqual(this.entries.tags, this.originalTags);
-
             if (tagsHaveChanged) {
                 const tagsString = currentTags.join(', ');
                 formData.append('tags', tagsString);
             }
 
-            // Добавляем метод PATCH
+            // Используем метод PATCH
             formData.append('_method', 'patch');
 
-            // Отладочные выводы (опционально, для проверки отправляемых данных)
+            // Вывод данных формы для отладки
             console.log('FormData Entries:');
             for (let pair of formData.entries()) {
                 console.log(pair[0] + ': ' + pair[1]);
@@ -170,10 +165,11 @@ export default {
                     },
                 })
                 .then((res) => {
-                    this.errors = {}; // Очистка ошибок
-                    const updatedCategoryId = this.getCategoryIdByTitle(res.data.category_title);
+                    // Сбрасываем сообщение об ошибке и ошибки валидации
+                    this.errorMessage = '';
+                    this.errors = {};
 
-                    // Обновляем данные поста в интерфейсе
+                    const updatedCategoryId = this.getCategoryIdByTitle(res.data.category_title);
                     this.entries.post = {
                         ...this.entries.post,
                         category_id: updatedCategoryId,
@@ -184,32 +180,26 @@ export default {
                             ? new Date(res.data.published_at).toISOString().split('T')[0]
                             : '',
                         image_url: res.data.image_url,
-                        image: null, // Сбрасываем новое изображение после успешного обновления
+                        image: null, // Сбрасываем выбранное изображение
                     };
 
-                    // Обновляем теги в интерфейсе
-                    this.entries.tags = res.data.tags_title
-                        ? res.data.tags_title.join(', ')
-                        : '';
-
-                    // Обновляем исходные теги для последующих сравнений
+                    this.entries.tags = res.data.tags_title ? res.data.tags_title.join(', ') : '';
                     this.originalTags = res.data.tags_title ? res.data.tags_title.join(', ') : '';
-
-                    // Обновляем исходные поля поста
                     this.originalEntries.post = { ...this.entries.post };
 
                     if (this.$refs.image_input) {
                         this.$refs.image_input.value = null;
                     }
 
-                    // Устанавливаем флаг игнорирования изменений
                     this.ignoreEntriesWatch = true;
                     this.isSuccess = true;
-                    this.editedPost = res.data; // Исправлено с createdPost на editedPost
+                    this.editedPost = res.data;
                 })
                 .catch((error) => {
                     if (error.response && error.response.data.errors) {
-                        this.errors = error.response.data.errors; // Сохраняем ошибки
+                        this.errors = error.response.data.errors;
+                    } else if (error.response && error.response.data.message) {
+                        this.errorMessage = error.response.data.message;
                     } else {
                         console.error('Ошибка при сохранении поста:', error);
                     }
@@ -218,7 +208,7 @@ export default {
 
         setImage(e) {
             const file = e.target.files[0];
-            console.log('Selected file:', file); // Добавлено для отладки
+            console.log('Selected file:', file);
             this.entries.post.image = file;
         },
     },
@@ -227,7 +217,7 @@ export default {
 
 <template>
     <div>
-        <!-- Ссылка Назад -->
+        <!-- Ссылка "Назад" -->
         <div class="mb-4">
             <Link :href="route('admin.posts.index')" class="text-blue-500 hover:underline">&laquo; Back</Link>
         </div>
@@ -239,7 +229,12 @@ export default {
                 <Link :href="route('admin.posts.show', editedPost.id)">View post</Link>
             </div>
 
-            <!-- Отображение текущего изображения -->
+            <!-- Сообщение об ошибке -->
+            <div v-if="errorMessage" class="mb-4 w-1/2 p-4 bg-red-200 text-red-800 font-medium rounded">
+                {{ errorMessage }}
+            </div>
+
+            <!-- Текущее изображение -->
             <div v-if="entries.post.image_url" class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Current Image</label>
                 <img :src="entries.post.image_url" :alt="entries.post.title"
@@ -248,25 +243,35 @@ export default {
 
             <!-- Поля формы -->
             <div v-for="(field, index) in ['title', 'description', 'content']" :key="index" class="mb-4">
-                <label :for="field" class="block text-sm font-medium text-gray-700 mb-2">{{
-                        field.charAt(0).toUpperCase() + field.slice(1)
-                    }}</label>
+                <label :for="field" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ field.charAt(0).toUpperCase() + field.slice(1) }}
+                </label>
                 <input
                     v-if="field !== 'content'"
                     type="text"
                     v-model="entries.post[field]"
-                    :class="['w-1/2 border rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2', errors[`post.${field}`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500']"
+                    :class="[
+                        'w-1/2 border rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2',
+                        errors[`post.${field}`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                    ]"
                     :placeholder="'Enter ' + field"
                 />
                 <textarea
                     v-else
                     v-model="entries.post[field]"
-                    :class="['w-1/2 border rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2', errors[`post.${field}`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500']"
+                    :class="[
+                        'w-1/2 border rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2',
+                        errors[`post.${field}`] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                    ]"
                     rows="5"
                     :placeholder="'Enter ' + field"
                 ></textarea>
-                <p v-if="errors[`post.${field}`]" class="text-red-500 text-sm mt-1"
-                   v-for="(error, idx) in errors[`post.${field}`]" :key="idx">
+                <p
+                    v-if="errors[`post.${field}`]"
+                    class="text-red-500 text-sm mt-1"
+                    v-for="(error, idx) in errors[`post.${field}`]"
+                    :key="idx"
+                >
                     {{ error }}
                 </p>
             </div>
@@ -277,48 +282,69 @@ export default {
                 <input
                     type="date"
                     v-model="entries.post.published_at"
-                    :class="['w-1/2 border rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2', errors['post.published_at'] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500']"
+                    :class="[
+                        'w-1/2 border rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2',
+                        errors['post.published_at'] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                    ]"
                 />
-                <p v-if="errors['post.published_at']" class="text-red-500 text-sm mt-1"
-                   v-for="(error, idx) in errors['post.published_at']" :key="idx">
+                <p
+                    v-if="errors['post.published_at']"
+                    class="text-red-500 text-sm mt-1"
+                    v-for="(error, idx) in errors['post.published_at']"
+                    :key="idx"
+                >
                     {{ error }}
                 </p>
             </div>
 
-            <!-- Поле для редактирования тегов -->
+            <!-- Редактирование тегов -->
             <div class="mb-4">
                 <label for="tags" class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
                 <input
                     type="text"
                     v-model="entries.tags"
-                    :class="['w-1/2 border rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2', errors['tags'] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500']"
+                    :class="[
+                        'w-1/2 border rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2',
+                        errors['tags'] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                    ]"
                     placeholder="Enter tags separated by commas"
                 />
-                <p v-if="errors['tags']" class="text-red-500 text-sm mt-1" v-for="(error, idx) in errors['tags']"
-                   :key="idx">
+                <p
+                    v-if="errors['tags']"
+                    class="text-red-500 text-sm mt-1"
+                    v-for="(error, idx) in errors['tags']"
+                    :key="idx"
+                >
                     {{ error }}
                 </p>
             </div>
 
-            <!-- Категории -->
+            <!-- Выбор категории -->
             <div class="mb-4">
                 <label for="category_id" class="block text-sm font-medium text-gray-700 mb-2">Category</label>
                 <select
                     v-model="entries.post.category_id"
-                    :class="['w-1/2 border rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2', errors['post.category_id'] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500']"
+                    :class="[
+                        'w-1/2 border rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2',
+                        errors['post.category_id'] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                    ]"
                 >
                     <option value="">Выберите категорию</option>
                     <option v-for="category in categories" :key="category.id" :value="category.id">
                         {{ category.title }}
                     </option>
                 </select>
-                <p v-if="errors['post.category_id']" class="text-red-500 text-sm mt-1"
-                   v-for="(error, idx) in errors['post.category_id']" :key="idx">
+                <p
+                    v-if="errors['post.category_id']"
+                    class="text-red-500 text-sm mt-1"
+                    v-for="(error, idx) in errors['post.category_id']"
+                    :key="idx"
+                >
                     {{ error }}
                 </p>
             </div>
 
-            <!-- Загрузка изображения -->
+            <!-- Загрузка нового изображения -->
             <div class="mb-4">
                 <label for="image_path" class="block text-sm font-medium text-gray-700 mb-2">Upload Image</label>
                 <input
@@ -326,17 +352,22 @@ export default {
                     @change="setImage"
                     type="file"
                     accept="image/*"
-                    :class="['w-1/2 border rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2',
-                    errors['post.image'] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500']"
+                    :class="[
+                        'w-1/2 border rounded-lg p-2 text-gray-700 focus:outline-none focus:ring-2',
+                        errors['post.image'] ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                    ]"
                 />
-                <!-- Перебор ошибок для изображения -->
-                <p v-if="errors['post.image']" class="text-red-500 text-sm mt-1"
-                   v-for="(error, idx) in errors['post.image']" :key="idx">
+                <p
+                    v-if="errors['post.image']"
+                    class="text-red-500 text-sm mt-1"
+                    v-for="(error, idx) in errors['post.image']"
+                    :key="idx"
+                >
                     {{ error }}
                 </p>
             </div>
 
-            <!-- Кнопка отправки -->
+            <!-- Кнопка отправки формы -->
             <div class="mt-6">
                 <button
                     @click.prevent="editPost"
@@ -350,5 +381,5 @@ export default {
 </template>
 
 <style scoped>
-/* Ваши стили, если нужны */
+/* Добавьте стили по необходимости */
 </style>
