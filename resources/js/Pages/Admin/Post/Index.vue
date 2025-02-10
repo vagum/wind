@@ -1,5 +1,10 @@
 <template>
     <div class="overflow-x-auto">
+        <!-- Флеш-сообщение (если есть и не обнулено) -->
+        <div v-if="flashMessage" class="p-4 mb-4 text-green-800 bg-green-200 rounded">
+            {{ flashMessage }}
+        </div>
+
         <!-- Кнопка создания нового поста -->
         <div class="mb-2">
             <Link :href="route('admin.posts.create')" class="text-blue-500 hover:underline">
@@ -28,8 +33,12 @@
         <table class="min-w-full bg-white border border-gray-200 rounded-lg">
             <thead>
             <tr class="bg-gray-100 border-b">
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">ID</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Title</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    ID
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Title
+                </th>
                 <th class="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Published at
                 </th>
@@ -59,16 +68,63 @@
                     <div class="flex justify-end space-x-2">
                         <!-- Кнопка редактирования -->
                         <div>
-                            <Link :href="route('admin.posts.edit', post.id)">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="text-blue-500 size-5 cursor-pointer">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                            <Link
+                                v-if="auth.user && auth.user.profile.id === post.profile_name.id"
+                                :href="route('admin.posts.edit', post.id)"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="1.5"
+                                    stroke="currentColor"
+                                    class="text-blue-500 h-5 w-5 cursor-pointer"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                                    />
                                 </svg>
                             </Link>
+                            <span v-else>
+                              <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke-width="1.5"
+                                  stroke="currentColor"
+                                  class="text-gray-500 h-5 w-5"
+                              >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                                />
+                              </svg>
+                            </span>
                         </div>
-                        <!-- Кнопка удаления -->
+                        <!-- Кнопка удаления (Index.vue удаляет пост без редиректа) -->
                         <div>
-                            <svg @click="promptDeletePost(post)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="text-red-500 size-5 cursor-pointer">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                :class="[
+                                  auth.user && auth.user.profile.id === post.profile_name.id
+                                    ? 'text-red-500 cursor-pointer'
+                                    : 'text-gray-500'
+                                  , 'size-5'
+                                ]"
+                                @click="auth.user && auth.user.profile.id === post.profile_name.id ? promptDeletePost(post) : null"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                                />
                             </svg>
                         </div>
                     </div>
@@ -97,8 +153,13 @@
 
         <!-- Модальное окно подтверждения удаления с анимацией -->
         <transition name="modal">
-            <div v-if="isModalOpen" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                <div class="bg-white rounded-lg shadow-lg w-96 transform transition-all duration-300">
+            <div
+                v-if="isModalOpen"
+                class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+            >
+                <div
+                    class="bg-white rounded-lg shadow-lg w-96 transform transition-all duration-300"
+                >
                     <div class="px-6 py-4">
                         <h2 class="text-xl font-semibold mb-2">Confirm Delete</h2>
                         <p class="mb-2">Are you really want delete this:</p>
@@ -137,12 +198,9 @@ function initFiltersFromQuery(activeFilters) {
     const params = new URLSearchParams(window.location.search);
     const result = {};
 
-    // Пробегаемся по всем ключам из active_filters
-    for (const [fieldName, fieldType] of Object.entries(activeFilters)) {
-        // Если в query-параметрах есть значение, используем его, иначе пустая строка
+    for (const [fieldName] of Object.entries(activeFilters)) {
         result[fieldName] = params.get(fieldName) || "";
     }
-    // Отдельно обрабатываем page
     result.page = parseInt(params.get("page") || "1", 10);
 
     return result;
@@ -153,17 +211,26 @@ export default {
     layout: AdminLayout,
 
     props: {
-        posts: Object,          // данные для таблицы (PostResource Collection)
-        active_filters: Object, // объект вида { title: 'text', content: 'text', ... }
+        posts: Object,          // Данные для таблицы
+        active_filters: Object, // Объект вида { title: 'text', content: 'text', ... }
+        auth: {
+            type: Object,
+            required: true,
+        },
     },
 
     data() {
         return {
-            // Инициализируем объект filter из URL-параметров, исходя из props.active_filters
+            // Фильтры
             filter: initFiltersFromQuery(this.active_filters),
-            postsData: this.posts || null, // либо данные из props, либо null
 
-            // Новые свойства для модального окна
+            // Данные с сервера
+            postsData: this.posts || null,
+
+            // Флеш-сообщение (показываем при удалении или если пришло из localStorage)
+            flashMessage: null,
+
+            // Свойства для модалки удаления
             isModalOpen: false,
             postToDelete: null,
         };
@@ -174,18 +241,22 @@ export default {
     },
 
     mounted() {
-        // Если Inertia не передал посты (или решили сбрасывать), грузим данные вручную при первом монтировании
+        // Считываем флеш-сообщение из localStorage (если приходим со страницы Show.vue)
+        const msg = localStorage.getItem("flashMessage");
+        if (msg) {
+            this.flashMessage = msg;
+            localStorage.removeItem("flashMessage");
+        }
+
+        // Если нет данных (например, при прямом переходе или сбросе),
+        // то подгружаем посты через getPosts().
         if (!this.postsData) {
             this.getPosts();
         }
     },
 
     watch: {
-        /**
-         * Отслеживаем только номер страницы отдельно,
-         * чтобы при клике на пагинацию не сбрасывать страницу в 1,
-         * а также не вызывать двойных запросов.
-         */
+        // Следим только за сменой страницы
         "filter.page"(newVal, oldVal) {
             if (newVal !== oldVal) {
                 this.updateUrl();
@@ -196,29 +267,31 @@ export default {
 
     methods: {
         /**
-         * Срабатывает при вводе в любой фильтр (кроме page).
-         * Сбрасываем page в 1, обновляем URL и делаем запрос.
+         * Сработает при вводе в любой текстовый фильтр (кроме page).
+         * 1) Сбрасываем flashMessage, чтобы не мешала
+         * 2) Ставим страницу в 1
+         * 3) Обновляем URL
+         * 4) Делаем запрос
          */
         onFilterInputChange() {
+            this.flashMessage = null; // обнуляем флеш-сообщение
             this.filter.page = 1;
             this.updateUrl();
             this.getPosts();
         },
 
         /**
-         * Обновляем адресную строку, формируем query-параметры только из непустых значений.
+         * Обновляем адресную строку без перезагрузки,
+         * формируя query-параметры только из непустых значений.
          */
         updateUrl() {
             const params = new URLSearchParams();
 
-            // Пробегаемся по всем полям фильтра (кроме page), чтобы записать непустые
-            for (const [fieldName, fieldType] of Object.entries(this.active_filters)) {
+            for (const [fieldName] of Object.entries(this.active_filters)) {
                 if (this.filter[fieldName]) {
                     params.set(fieldName, this.filter[fieldName]);
                 }
             }
-
-            // Если страница не 1, тоже пишем в параметры
             if (this.filter.page && this.filter.page !== 1) {
                 params.set("page", this.filter.page);
             }
@@ -232,12 +305,11 @@ export default {
         },
 
         /**
-         * Формируем объект для отправки на сервер (axios), исключая пустые поля и page=1.
+         * Формируем объект для axios (непустые поля + page, если не 1).
          */
         getRequestParams() {
             const result = {};
-
-            for (const [fieldName, fieldType] of Object.entries(this.active_filters)) {
+            for (const [fieldName] of Object.entries(this.active_filters)) {
                 if (this.filter[fieldName]) {
                     result[fieldName] = this.filter[fieldName];
                 }
@@ -245,12 +317,11 @@ export default {
             if (this.filter.page && this.filter.page !== 1) {
                 result.page = this.filter.page;
             }
-
             return result;
         },
 
         /**
-         * Запрашиваем посты через axios, передавая нужные query-параметры.
+         * Запрашиваем посты через axios с учётом фильтров.
          */
         getPosts() {
             axios
@@ -266,18 +337,22 @@ export default {
         },
 
         /**
-         * При клике на ссылку пагинации извлекаем из неё параметр page
-         * и пишем в this.filter.page.
+         * При клике на ссылку пагинации
+         * 1) Сбрасываем flashMessage
+         * 2) Извлекаем page
+         * 3) Запускаем getPosts с новым page
          */
         getPostsByLink(url) {
             if (!url) return;
+            this.flashMessage = null; // обнуляем флеш-сообщение
+
             const parsedUrl = new URL(url);
             const page = parseInt(parsedUrl.searchParams.get("page") || "1", 10);
             this.filter.page = page;
         },
 
         /**
-         * Открывает модальное окно для подтверждения удаления.
+         * Открываем модалку подтверждения удаления (Index.vue).
          */
         promptDeletePost(post) {
             this.postToDelete = post;
@@ -285,24 +360,36 @@ export default {
         },
 
         /**
-         * Подтверждает удаление поста.
+         * Подтверждаем удаление (Index.vue), БЕЗ редиректа.
+         * Выводим сообщение о том, что пост удалён (без localStorage).
          */
         confirmDelete() {
             if (!this.postToDelete) return;
 
-            axios.delete(route("admin.posts.destroy", this.postToDelete.id))
-                .then(res => {
+            // Сохраняем заголовок в переменную,
+            // чтобы не потерять его после closeModal()
+            const deletedTitle = this.postToDelete.title;
+
+            axios
+                .delete(route("admin.posts.destroy", this.postToDelete.id))
+                .then(() => {
+                    // Обновляем список постов
                     this.getPosts();
+
+                    // Закрываем модалку (обнуляет postToDelete)
                     this.closeModal();
+
+                    // Устанавливаем флеш-сообщение (в памяти)
+                    this.flashMessage = `The post "${deletedTitle}" was successfully deleted.`;
                 })
-                .catch(err => {
+                .catch((err) => {
                     console.error("Ошибка при удалении:", err);
                     this.closeModal();
                 });
         },
 
         /**
-         * Закрывает модальное окно и сбрасывает выбранный пост.
+         * Закрыть модалку удаления
          */
         closeModal() {
             this.isModalOpen = false;
@@ -313,19 +400,21 @@ export default {
 </script>
 
 <style scoped>
-/* Стили для анимации модального окна */
-.modal-enter-active, .modal-leave-active {
+/* Анимация модального окна */
+.modal-enter-active,
+.modal-leave-active {
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
-.modal-enter-from, .modal-leave-to {
+
+.modal-enter-from,
+.modal-leave-to {
     opacity: 0;
     transform: scale(0.95);
 }
-.modal-enter-to, .modal-leave-from {
+
+.modal-enter-to,
+.modal-leave-from {
     opacity: 1;
     transform: scale(1);
 }
-
-/* Дополнительные стили при необходимости */
-/* Например, можно добавить стили для кнопок или других элементов */
 </style>

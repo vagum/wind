@@ -113,12 +113,20 @@
                     <span>{{ post.comments_count }}</span>
                 </div>
 
-                <Link :href="route('clients.posts.show', post.id)" class="text-blue-500 hover:underline">
-                    Read Post
+                <Link :href="route('clients.posts.show', post.id)" class="text-gray-800 hover:underline">
+                    Read
                 </Link>
-                <!-- Ссылка Delete будет отображаться только если пользователь авторизован -->
+
+                <!-- Ссылка Edit будет отображаться только если пользователь авторизован и пост его -->
+                <Link
+                    v-if="auth.user && auth.user.profile.id === post.profile_name.id"
+                    :href="route('admin.posts.edit', post.id)" class="text-blue-500 hover:underline">
+                    Edit
+                </Link>
+
+                <!-- Ссылка Delete будет отображаться только если пользователь авторизован и пост его -->
                 <a
-                    v-if="this.auth && this.auth.user"
+                    v-if="auth.user && auth.user.profile.id === post.profile_name.id"
                     @click.prevent="deletePost"
                     href="#"
                     class="text-red-500 hover:underline"

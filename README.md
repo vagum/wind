@@ -8,6 +8,87 @@ https://github.com/vagum/windclient
 
 https://github.com/vagum/wind/blob/main/Wind.postman_collection.json
 
+============= 23 Policy Hooks Auth =============
+
+Временные метки по видео предыдущего урока:
+```
+28.55 Смотрим в браузере в http://127.0.0.1:8000/posts что посты могут удалять любые пользователи
+29.16 смотрим Client/PostController.php, рассказывает о том что посты можно отображать каждому своё
+30.25 php artisan make:policy PostPolicy -m Post
+30.42 смотрим Policies/PostPolicy.php
+32.12 смотрим Client/PostController.php
+32.42 делаем правку в методе delete в Policies/PostPolicy.php
+33.30 вопрос что делать с ролями
+34.44 в Client/PostController.php в методе destroy прописываем Gate::authorize('delete', $post)
+35.50 про то что в PostPolicy.php можно в одном методе прописать и далее использовать для всего.
+36.50 проверяем в браузере как срабатывает защита
+37.37 скрываем delete от пользователей, которые не имеют прав на удаление в Components/Post/PostItem.vue
+37.54 смотрим в "Просмотреть код -> закладка Vue" атрибуты где лежат данные по пользователям
+38.17 смотрим где это настраивается в app/Http/Middleware/HandleInertiaRequest.php
+38.22 вводим в HandleInertiaRequest.php абракадабру, чтобы показать что можно прокинуть таким образом что-то
+38.34 смотрим в браузере где отобразилась абракадабра в атрибутах во вкладке Vue
+39.00 правим HandleInertiaRequest.php как делают сеньоры, чтобы прогонять юзеря через ресурс
+39.16 создаем ресурс для юзеря если его не было. у меня был.
+39.26 дописываем в HandleInertiaRequest.php если пользователь в наличии, то возвращаем ресурс
+39.54 делаем правки в Resources/User/UserResource.php
+40.24 создаем ProfileResource.php чтобы отдавать тоже отфильтрованные данные в UserResource.php
+40.45 про то что ProfileResource.php можно не расписывать. у меня расписан.
+40.54 смотрим в браузере в закладке Vue что у нас прокинулось.
+41.08 вставляем проверу в PostItem.vue
+41.28 про то что такое ХУКИ
+41.56 смотрим блоксхему с хуками на гугле
+42.08 смотрим закладку Vue в браузере
+42.45 на блок схеме хуки beforeCreate, created, beforeMount и т.д. на каждом этапе можно что-то воткнуть.
+43.21 смотрим другу блок схему картинку
+44.22 смотрим PostItem.vue где там какие данные можно пихать в разные моменты времени
+45.22 смотрим в другом проекте index.html в блоке div id="app"
+45.43 в resources/js/app.js смотрим createInertiaApp, setup, .mount
+46.15 про el элемент
+46.35 mounted top1 используемых хуков
+47.24 переходим в PostItem.vue и там вводим mounted () и console.log(111111)
+48.12 убеждаемся что mounted() происходит после created()
+48.19 прописываем что угодно и оно поднимается в тот момент когда нам надо
+48.48 как добраться до данных в auth в PostItem.vue
+49.45 прописываем v-if="this.$page.props.auth.user.profile.id === post.profile_id
+50.00 про глобальный антибут который можно использовать в любом месте, передаем через mounted()
+50.28 смотрим profile_id в Post/PostResource.php чтобы передавался
+50.46 смотрим что передался глобальный атрибут который прописывали в mounted()
+и на любом уровне вложенности он будет доступен и его можно будет использовать
+в дочерних элементах и родитель его увидит
+```
+
+Что сделал:
+
+1) Добавил иконки удаления и редактирования внутри постов. В списке они были уже.
+2) В Admin/Posts/Show.vue после удаления редирект и передаем сообщение какой пост удалили
+   через LocalStorage в Index.vue в методе confirmDelete()
+3) В Admin/Posts/Index.vue после удаления нет редиректа, а сообщение о удалении просто
+   пишем в переменную this.flashMessage в методе confirmDelete()
+4) В Admin/Posts/Index.vue сделал отображение флеш сообщения, которое скрывается при клике
+   по пагинации или вводу в фильтрах
+5) Добавил в Admin/Post/Show.vue для линка редактирования и удаления постов чтобы просто кнопки не отображались
+   v-if="auth.user && auth.user.profile.id === post.profile_name.id"
+   можно добавить чтобы не по профайлу а по юзерю было. т.к. у меня 3 профайла на одного юзеря
+   v-if="auth.user && auth.user.profile.id === post.profile_name.id"
+6) добавил в Admin/Post/Index.vue чтобы иконки у не авторов были не кликабельны и были серого цвета
+   v-if="auth.user && auth.user.profile.id === post.profile_name.id"
+7) то же самое сделал для Client/Post/Show.vue и Components/Post/PostItem.vue
+7) добавил в Components/Comment/CommentItem.vue проверку на владельца коммента у кнопок редактирования и удаления
+   v-if="auth.user.profile.id === comment.profile.id"
+8) добавил в routes/admin.php 'update', 'destroy' для CommentController.php
+9) добавил в Admin/CommentController.php методы update и destroy
+10) поправил в Admin/StatsController.php метод index для сортировок
+11) добавил в /Stats/IndexRequest.php новые переменные для сортировок sort_direction и sort_column
+12) клонировал в PostPolicy.php строчку из метода delete в метод update
+13) прописал в Client/PostController.php и Admin/PostConroller.php для update и destroy
+14) сделал php artisan make:policy CommentPolicy -m Comment
+15) прописал туда методы update и destroy
+    return (int) $user->profile->id === (int) $comment->profile_id;
+16) прописал в Admin/CommentController.php
+    Gate::authorize('update', $comment); и Gate::authorize('delete', $comment); соответсвенно
+17) поправил UserResource.php на проверку существования profile, т.к. какие-то профайлы удалили, а они прикреплены
+    к пользователям и в итоге в разделе Users возникала ошибка про null в id
+
 ============= 22 Queue Job Shedule =============
 
 Временные метки по видео предыдущего урока:

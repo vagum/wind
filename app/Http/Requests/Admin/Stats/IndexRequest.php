@@ -21,6 +21,8 @@ class IndexRequest extends FormRequest
             'views_to' => 'nullable|integer',
             'page' => 'nullable|integer',
             'per_page' => 'nullable|integer',
+            'sort_column' => 'nullable|string',
+            'sort_direction' => 'nullable|string',
         ];
     }
 

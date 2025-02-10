@@ -14,6 +14,7 @@ use App\Services\PostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -103,6 +104,7 @@ class PostController extends Controller
 
     public function update(UpdateRequest $request, Post $post)
     {
+        Gate::authorize('update', $post);
 //        dd($request->validationData());
         $data = $request->except('post.image');
 //        dd($data);
@@ -112,6 +114,8 @@ class PostController extends Controller
 
     public function destroy(Post  $post): JsonResponse
     {
+        Gate::authorize('delete', $post);
+
         $post->delete();
         return response()->json([
             'message' => 'The post was successfully deleted.',

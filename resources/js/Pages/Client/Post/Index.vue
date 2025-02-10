@@ -276,9 +276,16 @@ export default {
                     post.isToggling = false;
                 });
         },
-        formatDate(dateStr) {
-            const options = {year: "numeric", month: "long", day: "numeric"};
-            return new Date(dateStr).toLocaleDateString(undefined, options);
+        // Форматирование даты
+        formatDate(dateString) {
+            const options = {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            };
+            return new Date(dateString).toLocaleString("en-EN", options);
         },
         confirmDelete() {
             if (!this.postToDelete || !this.postToDelete.id) return;

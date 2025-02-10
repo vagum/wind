@@ -12,6 +12,7 @@ use App\Jobs\Post\ToggleLikePostSendMailJob;
 use App\Models\Post;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Request;
 
 class PostController extends Controller
@@ -106,6 +107,7 @@ class PostController extends Controller
 
     public function destroy(Post $post)
     {
+        Gate::authorize('delete', $post);
 
         $post->delete();
 

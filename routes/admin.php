@@ -20,7 +20,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     ]);
     Route::resource('comments', CommentController::class, [
         'as' => 'admin',
-        'only' => ['index', 'create', 'store', 'show']
+        'only' => ['index', 'create', 'store', 'show', 'update', 'destroy']
     ]);
     Route::resource('posts', PostController::class, [
         'as' => 'admin',

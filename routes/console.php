@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schedule;
 
 
 //Schedule::command('go')->everySecond();
-Schedule::command('stats:aggregate-all-dates')->dailyAt('18:49');
+//Schedule::command('stats:aggregate-all-dates')->dailyAt('15:23');
 
 //Artisan::command('inspire', function () {
 //    $this->comment(Inspiring::quote());
