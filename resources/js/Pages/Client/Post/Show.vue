@@ -376,7 +376,7 @@ export default {
         // Редактирование комментария
         handleEditComment({ commentId, newContent }) {
             axios
-                .put(route("comments.update", commentId), { content: newContent })
+                .put(route("admin.comments.update", commentId), { content: newContent })
                 .then((response) => {
                     this.updateCommentInList(commentId, response.data);
                 })
@@ -388,7 +388,7 @@ export default {
         // Удаление комментария
         handleDeleteComment(commentId) {
             axios
-                .delete(route("comments.destroy", commentId))
+                .delete(route("admin.comments.destroy", commentId))
                 .then(() => {
                     // Удаляем комментарий из локального массива
                     this.removeCommentFromList(this.comments, commentId);

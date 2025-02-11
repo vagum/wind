@@ -22,9 +22,10 @@ class StatsResource extends JsonResource
             'replies_count' => $this->replies_count,
             'views_count' => $this->views_count,
             'likes_count' => $this->likes_count,
-            'likes_views' => number_format($this->likes_views,2),
-            'likes_comments' => number_format($this->likes_comments,2),
+            'likes_views' => number_format($this->likes_views, 2),
+
+            'likes_comments' => number_format($this->likes_comments, 2),
+
         ];
     }
-
 }

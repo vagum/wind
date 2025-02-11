@@ -23,7 +23,7 @@
 40.24 создаем ProfileResource.php чтобы отдавать тоже отфильтрованные данные в UserResource.php
 40.45 про то что ProfileResource.php можно не расписывать. у меня расписан.
 40.54 смотрим в браузере в закладке Vue что у нас прокинулось.
-41.08 вставляем проверу в PostItem.vue
+41.08 вставляем проверку в PostItem.vue
 41.28 про то что такое ХУКИ
 41.56 смотрим блоксхему с хуками на гугле
 42.08 смотрим закладку Vue в браузере
@@ -60,26 +60,48 @@
 6) добавил в Admin/Post/Index.vue чтобы иконки у не авторов были не кликабельны и были серого цвета
    v-if="auth.user && auth.user.profile.id === post.profile_name.id"
 7) то же самое сделал для Client/Post/Show.vue и Components/Post/PostItem.vue
-7) добавил в Components/Comment/CommentItem.vue проверку на владельца коммента у кнопок редактирования и удаления
+8) добавил в Components/Comment/CommentItem.vue проверку на владельца коммента у кнопок редактирования и удаления
    v-if="auth.user.profile.id === comment.profile.id"
-8) добавил в routes/admin.php 'update', 'destroy' для CommentController.php
-9) добавил в Admin/CommentController.php методы update и destroy
-10) поправил в Admin/StatsController.php метод index для сортировок
-11) добавил в /Stats/IndexRequest.php новые переменные для сортировок sort_direction и sort_column
-12) клонировал в PostPolicy.php строчку из метода delete в метод update
-13) прописал в Client/PostController.php и Admin/PostConroller.php для update и destroy
-14) сделал php artisan make:policy CommentPolicy -m Comment
-15) прописал туда методы update и destroy
+9) добавил в routes/admin.php 'update', 'destroy' для CommentController.php
+10) добавил в Admin/CommentController.php методы update и destroy
+11) поправил в Admin/StatsController.php метод index для сортировок
+12) добавил в /Stats/IndexRequest.php новые переменные для сортировок sort_direction и sort_column
+13) клонировал в PostPolicy.php строчку из метода delete в метод update
+14) прописал в Client/PostController.php и Admin/PostConroller.php для update и destroy
+15) сделал php artisan make:policy CommentPolicy -m Comment
+16) прописал туда методы update и destroy
     return (int) $user->profile->id === (int) $comment->profile_id;
-16) прописал в Admin/CommentController.php
+17) прописал в Admin/CommentController.php
     Gate::authorize('update', $comment); и Gate::authorize('delete', $comment); соответсвенно
-17) поправил UserResource.php на проверку существования profile, т.к. какие-то профайлы удалили, а они прикреплены
+18) поправил UserResource.php на проверку существования profile, т.к. какие-то профайлы удалили, а они прикреплены
     к пользователям и в итоге в разделе Users возникала ошибка про null в id
-18) добавил отображение ошибки о неавторизованной попытке отредактировать пост в Admin/Post/Edit.vue
+19) добавил отображение ошибки о неавторизованной попытке отредактировать пост в Admin/Post/Edit.vue
     в .catch((error) this.errorMessage = error.response.data.message; в axios запросе на апдейт поста
 
 
 
 
 
+======================================================
+по Laravel Pint дока:
+https://laravel.su/docs/11.x/pint
 
+Добавляем Watcher в Phpstorm:
+Settings -> Поиском File Watchers -> Нажимаем +
+Выбираем <custom>, там пишем
+Name: Pint
+File Type: PHP
+Program: Жмем + и выбираем макрос $ProjectFileDir$
+         и дописываем \vendor\bin\pint
+Arguments: $FilePath$
+Output paths to refresh: $FilePath$
+Working directory: $ProjectFileDir$
+
+Advanced Options:
+
+		ВНИМАНИЕ !!! галка ТОЛЬКО на Trigger the watcher on external changes
+
+		остальные галки снимаем, иначе Pint будет мешать работать в IDE и исправлять сразу.
+		сейчас же, он будет править только когда мы переключаемся из окна IDE.
+
+в File Watchers можно сделать импорт и экспорт кликнув соответствующую иконку.
