@@ -19,9 +19,29 @@ class CommentController extends Controller
 {
     public function index()
     {
-        $comments = Comment::all();
-        $comments = CommentResource::collection($comments)->resolve();
-        return inertia('Admin/Comment/Index', compact('comments'));
+        $profileId = auth()->check() && auth()->user()->profile
+            ? auth()->user()->profile->id
+            : null;
+
+        $comments = Comment::with([
+            'post',
+            'profile',        // Если в ProfileResource уже настроен eager loading для user (через $with или with(['user']))
+            'profile.user',
+            'replies'
+        ])
+            ->withCount('likedProfiles')
+            ->withCount('replies')
+            // Добавляем withExists для проверки, лайкнул ли текущий пользователь
+            ->withExists(['likedProfiles as is_liked' => function ($query) use ($profileId) {
+                if ($profileId) {
+                    $query->where('profiles.id', $profileId);
+                }
+            }])
+            ->get();
+
+        return inertia('Admin/Comment/Index', [
+            'comments' => CommentResource::collection($comments)->resolve(),
+        ]);
     }
 
     public function show(Comment $comment): Response

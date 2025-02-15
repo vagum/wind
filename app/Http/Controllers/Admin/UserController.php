@@ -15,13 +15,17 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::all();
+        // Загружаем пользователей вместе с профилем и ролями,
+        // а также вложенную связь profile.user, чтобы при обращении в ProfileResource
+        // не выполнялись дополнительные запросы
+        $users = User::with(['profile.user', 'roles'])->get();
         $users = UserResource::collection($users)->resolve();
         return inertia('Admin/User/Index', compact('users'));
     }
 
     public function show(User $user): Response
     {
+        $user->load(['profile', 'roles']);
         $user = UserResource::make($user)->resolve();
         return inertia('Admin/User/Show', compact('user'));
     }

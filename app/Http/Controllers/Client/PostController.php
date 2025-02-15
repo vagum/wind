@@ -11,6 +11,7 @@ use App\Jobs\Post\StoreCommentPostSendMailJob;
 use App\Jobs\Post\ToggleLikePostSendMailJob;
 use App\Models\Post;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Request;
@@ -21,7 +22,24 @@ class PostController extends Controller
     {
         $data = $request->validationData();
 //        dd($data);
-        $posts = Post::filter($data)->orderBy('id','desc')->paginate($data['per_page'],'*','page',$data['page']);
+
+        $cacheName = 'posts.' . md5(json_encode($data));
+
+        $posts = Cache::remember($cacheName, now()->addMinutes(100), function () use ($data) {
+            return Post::filter($data)->orderBy('id', 'desc')->with([
+                'category',
+                'profile.user',
+                'tags',
+                'likedProfiles',
+                'comments',
+                'viewedProfiles'
+            ])->withCount([
+                'likedProfiles',
+                'parentComments',
+                'viewedProfiles'
+            ])->paginate($data['per_page'], '*', 'page', $data['page']);
+        });
+
         $posts = PostResource::collection($posts);
 
         // Массив с фильтрами и их типами
@@ -61,6 +79,18 @@ class PostController extends Controller
             'updated_at' => now(),
         ]);
 
+        // Загружаем необходимые отношения для поста, чтобы избежать дублирования запросов
+        $post->load([
+            'category',
+            'profile.user',     // загрузка профиля с пользователем для ProfileResource
+            'tags',
+            'likedProfiles',
+            'parentComments',
+        ])->loadCount([
+            'viewedProfiles',
+            'parentComments',
+        ]);
+
         $post = PostResource::make($post)->resolve();
         return inertia("Client/Post/Show", compact("post"));
     }
@@ -80,6 +110,9 @@ class PostController extends Controller
             'status' => 2,
             'is_published' => true,
         ];
+
+        // обнуляем кеш постов в PostgreSQL, для редис и мемкешед есть tags и удаляется по другому
+        DB::table('cache')->where('key', 'like', 'posts.%')->delete();
 
         return Post::create($postData);
     }
@@ -111,17 +144,52 @@ class PostController extends Controller
 
         $post->delete();
 
+        // обнуляем кеш постов в PostgreSQL, для редис и мемкешед есть tags и удаляется по другому
+        DB::table('cache')->where('key', 'like', 'posts.%')->delete();
+
         return response(['message' => 'Post has been deleted']);
     }
 
     public function storeComment(Post $post, StoreCommentRequest $request): array
     {
-        $data = $request->validationData();
+        $data = $request->validated();
 
-        $comment = auth()->user()->profile->comments()->create($data);
+        // Создаём комментарий, привязываем к текущему профилю
+        // и назначаем нужный post_id
+        $comment = auth()->user()->profile->comments()->create([
+            'post_id'   => $post->id,
+            'content'   => $data['content'],
+            'parent_id' => $data['parent_id'] ?? null,
+        ]);
 
-        StoreCommentPostSendMailJob::dispatch($post, $comment, auth()->user()->profile, auth()->user()->email)->onQueue('post-mail');
+        // Запускаем джоб на отправку письма (если нужно)
+        StoreCommentPostSendMailJob::dispatch(
+            $post,
+            $comment,
+            auth()->user()->profile,
+            auth()->user()->email
+        )->onQueue('post-mail');
 
+        // Подгружаем профиль, пользователя, счётчик лайков (liked_profiles_count) и флаг is_liked
+        // чтобы не было дополнительных запросов на фронте
+        $profileId = auth()->check() ? auth()->user()->profile->id : null;
+
+        $comment->load([
+            'profile.user',  // профиль + пользователь
+        ])
+            ->loadCount([
+                'replies',
+                'likedProfiles', // нужно, чтобы получить liked_profiles_count
+            ])
+            ->loadExists([
+                'likedProfiles as is_liked' => function ($query) use ($profileId) {
+                    if ($profileId) {
+                        $query->where('profiles.id', $profileId);
+                    }
+                }
+            ]);
+
+        // Возвращаем ресурс, который теперь содержит все нужные поля
         return CommentResource::make($comment)->resolve();
     }
 

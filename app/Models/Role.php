@@ -3,14 +3,12 @@
 namespace App\Models;
 
 use App\Traits\Models\Traits\HasFilter;
-use App\Traits\Models\Traits\HasLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
-    use HasFactory;
-    use HasFilter;
+    use HasFactory, HasFilter;
     protected $guarded = false;
 
     const ROLE_ADMIN = 1;

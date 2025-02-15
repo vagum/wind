@@ -2,13 +2,8 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Traits\LogChanges;
 use App\Traits\Models\Traits\HasFilter;
-use App\Traits\Models\Traits\HasLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -20,32 +15,12 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, LogChanges;
-    use HasFilter;
+    use HasFactory, Notifiable, HasFilter;
 
     protected static function boot()
     {
         parent::boot();
 
-        // Логирование события создания
-        static::created(function ($user) {
-            $user->logChanges('UserBoot@created');
-        });
-
-        // Логирование события обновления
-        static::updated(function ($user) {
-            $user->logChanges('UserBoot@updated');
-        });
-
-        // Логирование события удаления
-        static::deleted(function ($user) {
-            $user->logChanges('UserBoot@deleted');
-        });
-
-        // Логирование события получения
-        static::retrieved(function ($user) {
-            $user->logChanges('UserBoot@retrieved');
-        });
     }
 
     /**

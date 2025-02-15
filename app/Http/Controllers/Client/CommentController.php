@@ -63,12 +63,34 @@ class CommentController extends Controller
 
     public function indexReplies(Comment $comment): array
     {
-        // Получаем ответы для данного комментария, можно добавить withCount, если нужен уровень вложенности
+        $profileId = auth()->check() && auth()->user()->profile
+            ? auth()->user()->profile->id
+            : null;
+
+        // Загружаем реплаи с:
+        // 1) Количеством лайков (liked_profiles_count),
+        // 2) Флагом is_liked (есть ли лайк от текущего пользователя),
+        // 3) Количеством ответов (replies_count).
+        // 4) Профилем автора (и user, если нужно в ресурсе).
         $replies = $comment->replies()
-            ->withCount('replies')
-            ->with('profile') // если нужно для отображения автора
+            ->with([
+                'profile.user', // если нужно обращаться к user внутри ProfileResource или CommentResource
+            ])
+            ->withCount([
+                'likedProfiles',  // получим liked_profiles_count
+                'replies',        // получим replies_count (дочерние реплаи)
+            ])
+            ->withExists([
+                // Флаг "is_liked"
+                'likedProfiles as is_liked' => function ($query) use ($profileId) {
+                    if ($profileId) {
+                        $query->where('profiles.id', $profileId);
+                    }
+                }
+            ])
             ->get();
 
         return CommentResource::collection($replies)->resolve();
     }
+
 }

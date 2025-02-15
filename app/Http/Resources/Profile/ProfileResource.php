@@ -18,23 +18,23 @@ class ProfileResource extends JsonResource
 //        $userData = UserResource::make($this->user)->resolve();
 
         return [
-            'id' => $this->id,
-            'user_id' => $this->user_id,
-            'name' => $this->name,
-            'address' => $this->address,
-            'phone' => $this->phone,
-            'avatar' => $this->avatar,
+            'id'          => $this->id,
+            'user_id'     => $this->user_id,
+            'name'        => $this->name,
+            'address'     => $this->address,
+            'phone'       => $this->phone,
+            'avatar'      => $this->avatar,
             'description' => $this->description,
-            'gender' => $this->gender,
-            'birthed_at' => $this->birthed_at,
-            'user' => [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
-                // Другие поля пользователя, если необходимо
-            ],
-//            'user_name' => $userData['name'] ?? null,
-//            'user_email' => $userData['email'] ?? null,
-            'image_url' => $this->image_url,
+            'gender'      => $this->gender,
+            'birthed_at'  => $this->birthed_at,
+            'user'        => $this->whenLoaded('user', function () {
+                return [
+                    'id'   => $this->user->id,
+                    'name' => $this->user->name,
+                    // Другие поля пользователя, если необходимо
+                ];
+            }),
+            'image_url'   => $this->image_url,
         ];
     }
 }

@@ -14,7 +14,8 @@ class ProfileController extends Controller
 {
     public function index()
     {
-        $profiles = Profile::all();
+        // Загружаем профили вместе со связанной моделью user
+        $profiles = Profile::with('user')->get();
         $profiles = ProfileResource::collection($profiles)->resolve();
         return inertia('Admin/Profile/Index', compact('profiles'));
     }

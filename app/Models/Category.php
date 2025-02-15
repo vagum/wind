@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use App\Traits\LogChanges;
 use App\Traits\Models\Traits\HasFilter;
-use App\Traits\Models\Traits\HasLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,8 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Category extends Model
 {
-    use HasFactory, LogChanges;
-    use HasFilter, HasLog;
+    use HasFactory, HasFilter;
 
     protected static function boot()
     {

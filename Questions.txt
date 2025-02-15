@@ -1,107 +1,71 @@
 Всё в старом проекте wind!
 
 Временные метки по видео предыдущего урока:
-28.55 Смотрим в браузере в http://127.0.0.1:8000/posts что посты могут удалять любые пользователи
-29.16 смотрим Client/PostController.php, рассказывает о том что посты можно отображать каждому своё
-30.25 php artisan make:policy PostPolicy -m Post
-30.42 смотрим Policies/PostPolicy.php
-32.12 смотрим Client/PostController.php
-32.42 делаем правку в методе delete в Policies/PostPolicy.php
-33.30 вопрос что делать с ролями
-34.44 в Client/PostController.php в методе destroy прописываем Gate::authorize('delete', $post)
-35.50 про то что в PostPolicy.php можно в одном методе прописать и далее использовать для всего.
-36.50 проверяем в браузере как срабатывает защита
-37.37 скрываем delete от пользователей, которые не имеют прав на удаление в Components/Post/PostItem.vue
-37.54 смотрим в "Просмотреть код -> закладка Vue" атрибуты где лежат данные по пользователям
-38.17 смотрим где это настраивается в app/Http/Middleware/HandleInertiaRequest.php
-38.22 вводим в HandleInertiaRequest.php абракадабру, чтобы показать что можно прокинуть таким образом что-то
-38.34 смотрим в браузере где отобразилась абракадабра в атрибутах во вкладке Vue
-39.00 правим HandleInertiaRequest.php как делают сеньоры, чтобы прогонять юзеря через ресурс
-39.16 создаем ресурс для юзеря если его не было. у меня был.
-39.26 дописываем в HandleInertiaRequest.php если пользователь в наличии, то возвращаем ресурс
-39.54 делаем правки в Resources/User/UserResource.php
-40.24 создаем ProfileResource.php чтобы отдавать тоже отфильтрованные данные в UserResource.php
-40.45 про то что ProfileResource.php можно не расписывать. у меня расписан.
-40.54 смотрим в браузере в закладке Vue что у нас прокинулось.
-41.08 вставляем проверку в PostItem.vue
-41.28 про то что такое ХУКИ
-41.56 смотрим блоксхему с хуками на гугле
-42.08 смотрим закладку Vue в браузере
-42.45 на блок схеме хуки beforeCreate, created, beforeMount и т.д. на каждом этапе можно что-то воткнуть.
-43.21 смотрим другу блок схему картинку
-44.22 смотрим PostItem.vue где там какие данные можно пихать в разные моменты времени
-45.22 смотрим в другом проекте index.html в блоке div id="app"
-45.43 в resources/js/app.js смотрим createInertiaApp, setup, .mount
-46.15 про el элемент
-46.35 mounted top1 используемых хуков
-47.24 переходим в PostItem.vue и там вводим mounted () и console.log(111111)
-48.12 убеждаемся что mounted() происходит после created()
-48.19 прописываем что угодно и оно поднимается в тот момент когда нам надо
-48.48 как добраться до данных в auth в PostItem.vue
-49.45 прописываем v-if="this.$page.props.auth.user.profile.id === post.profile_id
-50.00 про глобальный антибут который можно использовать в любом месте, передаем через mounted()
-50.28 смотрим profile_id в Post/PostResource.php чтобы передавался
-50.46 смотрим что передался глобальный атрибут который прописывали в mounted()
-      и на любом уровне вложенности он будет доступен и его можно будет использовать
-      в дочерних элементах и родитель его увидит
+20.35 переходим в Admin/Post/PostController.php в метод index
+21.25 объяснение что и как работает в кеше
+21.54 заходим на страницу в админке с индексом постов и смотрим таблицу cache в базе
+22.20 про то что у кеша надо разные имена иначе будет проблема
+23.14 вписываем в Admin/Post/PostController.php генерацию уникальных CacheName для фильтров
+23.41 с помощью MD5 сокращаем длинную строку фильтров до короткой
+23.53 прописываем $cacheName в return кеша
+24.25 смотрим чего назаписывалось в базу в таблицу cache
+24.49 убираем кеш из PostController.php, чтобы разбирать Laravel Telescope
+25.03 про то что такое Laravel Telescope и как он лучше для отладки чем xDebug
+25.15 смотрим доку по Laravel Telescope
+      https://laravel.su/docs/11.x/telescope
+25.19 устанавливаем Telescope
+      composer require laravel/telescope
+      php artisan telescope:install
+      php artisan migrate
 
-Что сделал:
-1) Добавил иконки удаления и редактирования внутри постов. В списке они были уже.
-2) В Admin/Posts/Show.vue после удаления редирект и передаем сообщение какой пост удалили
-   через LocalStorage в Index.vue в методе confirmDelete()
-3) В Admin/Posts/Index.vue после удаления нет редиректа, а сообщение о удалении просто
-   пишем в переменную this.flashMessage в методе confirmDelete()
-4) В Admin/Posts/Index.vue сделал отображение флеш сообщения, которое скрывается при клике
-   по пагинации или вводу в фильтрах
-5) Добавил в Admin/Post/Show.vue для линка редактирования и удаления постов чтобы просто кнопки не отображались
-   v-if="auth.user && auth.user.profile.id === post.profile_name.id"
-   можно добавить чтобы не по профайлу а по юзерю было. т.к. у меня 3 профайла на одного юзеря
-   v-if="auth.user && auth.user.profile.id === post.profile_name.id"
-6) добавил в Admin/Post/Index.vue чтобы иконки у не авторов были не кликабельны и были серого цвета
-   v-if="auth.user && auth.user.profile.id === post.profile_name.id"
-7) то же самое сделал для Client/Post/Show.vue и Components/Post/PostItem.vue
-8) добавил в Components/Comment/CommentItem.vue проверку на владельца коммента у кнопок редактирования и удаления
-   v-if="auth.user.profile.id === comment.profile.id"
-9) добавил в routes/admin.php 'update', 'destroy' для CommentController.php
-10) добавил в Admin/CommentController.php методы update и destroy
-11) поправил в Admin/StatsController.php метод index для сортировок
-12) добавил в /Stats/IndexRequest.php новые переменные для сортировок sort_direction и sort_column
-13) клонировал в PostPolicy.php строчку из метода delete в метод update
-14) прописал в Client/PostController.php и Admin/PostConroller.php для update и destroy
-15) сделал php artisan make:policy CommentPolicy -m Comment
-16) прописал туда методы update и destroy
-    return (int) $user->profile->id === (int) $comment->profile_id;
-17) прописал в Admin/CommentController.php
-    Gate::authorize('update', $comment); и Gate::authorize('delete', $comment); соответсвенно
-18) поправил UserResource.php на проверку существования profile, т.к. какие-то профайлы удалили, а они прикреплены
-    к пользователям и в итоге в разделе Users возникала ошибка про null в id
-19) добавил отображение ошибки о неавторизованной попытке отредактировать пост в Admin/Post/Edit.vue
-    в .catch((error) this.errorMessage = error.response.data.message; в axios запросе на апдейт поста
+      сбрасываем кеш у роутов т.к. у меня иначе 404 ошибка вместо телескопа:
+      php artisan route:cache
 
+26.03 смотрим телескоп в http://127.0.0.1:8000/telescope
+26.28 идем смотреть queries в REQUESTS т.к. их чаще смотрят
+26.46 самые главные места где тормоза
+27.01 идем в конроллер в метод страничку которого дебажим и ищем там ресурс
+27.06 переходим в Admin/Post/PostResource.php
+27.23 чтобы повторных вызовов избежать делаем ->with('category')
+27.45 делаем F5 на странице которую отлаживаем
+27.51 смотрим в телескопе насколько стало лучше
+28.24 смотрим чего там еще такое дублируется в ресурсе
+28.36 идем в модель Post в is_liked, ищем для этого getIsLikeAttribute
+26.54 копируем отношение у постов LikedProfiles
+29.04 вставляем в PostController.php массивом к ->with(['category','LikedProfiles'])
+29.09 делаем F5 на странице и смотрим что получилось в телескопе
+33.33 что такое Mapper и зачем это надо
+34.17 php artisan make:class Mappers/PostMapper
+32.24 правки в PostController.php для маппера PostMapper:index()
+34.57 переносим из PostController.php обращение к модели и ресурсу в маппер
+37.08 чтобы не ломалось в месте Request::wantsJson в PostController.php делаем PostMapper::indexAsJson
+39.35 оттолкнулись от проблемы в PostController.php
+40.22 про то что дубляж это не дубляж
+40.42 убираем то что возвращаем чтобы посмотреть куда выведет
+41.17 про то что уместно продублировать в PostMapper из-за разных направленностей
+41.50 в чем фишка меппера и чем отличается от ресурса
+43.07 про то что можно сделать геттер в моделе и его использовать в ресурсе и далее в шаблоне блейда
+45.20 про две фронтовские темы что остались
+45.31 про то что Computed должен заниматься бэкенд
+46.08 смотрим Admin/Post/Index.php
+46.33 смотрим про name: 'Boris'
+47.05 про то что Computed позволяет сделать геттер и поменять любой атрибут
+47.24 прописываем Computed в шаблоне
+47.46 смотрим в браузере как поменялся 'Boris'
+48.48 ответ на вопрос можем ли мы менять Computed и происходит ли рендеринг при этом
+49.10 пример метода для смены Computed
+51.04 еще один ход чтобы показать что он не реактивный
+51.32 Modal не модальное окно, а концепция
+51.56 вставляем блок div в шаблон
+53.25 смотрим что получилось в браузере
+53.37 дописываем "усы"
+53.46 где это пригождается: "отзывы", "карусели", "попапы" и т.д.
+54.31 смотрим пример Computed для изменения стилей для разного уровня вложенности ответов на комменты
+54.59 смотрим в браузере как выглядят эти комменты и ответы на комменты. разный цвет фона, чтобы не сливался.
+55.53 про Laravel Pint
+56.09 смотрим доку по Laravel Pint в браузере
+      https://laravel.su/docs/11.x/pint
+56.29 настройка в Phpstorm Laravel Pint
+59.35 смотрим пример форматирования
+1.00.02 жмем Cntrl+z и смотрим комбинацию клавиш в Phpstorm которая делает то же самое по Cntrl + Alt + L
 
-
-
-
-======================================================
-по Laravel Pint дока:
-https://laravel.su/docs/11.x/pint
-
-Добавляем Watcher в Phpstorm:
-Settings -> Поиском File Watchers -> Нажимаем +
-Выбираем <custom>, там пишем
-Name: Pint
-File Type: PHP
-Program: Жмем + и выбираем макрос $ProjectFileDir$
-         и дописываем \vendor\bin\pint
-Arguments: $FilePath$
-Output paths to refresh: $FilePath$
-Working directory: $ProjectFileDir$
-
-Advanced Options:
-
-		ВНИМАНИЕ !!! галка ТОЛЬКО на Trigger the watcher on external changes
-
-		остальные галки снимаем, иначе Pint будет мешать работать в IDE и исправлять сразу.
-		сейчас же, он будет править только когда мы переключаемся из окна IDE.
-
-в File Watchers можно сделать импорт и экспорт кликнув соответствующую иконку.

@@ -9,6 +9,7 @@
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^11.9",
         "laravel/sanctum": "^4.0",
+        "laravel/telescope": "^5.5",
         "laravel/tinker": "^2.9",
         "tightenco/ziggy": "^2.0",
         "tymon/jwt-auth": "^2.1"

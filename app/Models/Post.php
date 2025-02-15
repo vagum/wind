@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use App\Observers\PostObserver;
 use App\Traits\Models\Traits\HasFilter;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +12,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-#[ObservedBy(PostObserver::class)]
 class Post extends Model
 {
 //    protected $guarded = false;
@@ -80,33 +77,31 @@ class Post extends Model
 
     public function getIsLikedAttribute(): bool
     {
-        // Проверяем, аутентифицирован ли пользователь
         if (!auth()->check()) {
             return false;
         }
 
-        // Получаем профиль пользователя, если он существует
         $profile = auth()->user()->profile;
-
-        // Если профиль не найден, возвращаем false
         if (!$profile) {
             return false;
         }
 
-        // Проверяем, содержит ли коллекция likedProfiles профиль текущего пользователя
+        // Если отношение не загружено, загрузим его один раз
+        if (!$this->relationLoaded('likedProfiles')) {
+            $this->load('likedProfiles');
+        }
+
         return $this->likedProfiles->contains($profile->id);
     }
 
-    public function getCommentsCountAttribute(): int
+    public function parentComments(): HasMany
     {
-        return $this->comments()->whereNull('parent_id')->count();
+        return $this->comments()->whereNull('parent_id');
     }
 
     public function getViewsCountAttribute(): int
     {
-        return DB::table('post_profile_views')
-            ->where('post_id', $this->id)
-            ->count();
+        return $this->viewed_profiles_count ?? 0;
     }
 
 }

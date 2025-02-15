@@ -13,6 +13,7 @@ use App\Models\Post;
 use App\Services\PostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Request;
@@ -26,7 +27,24 @@ class PostController extends Controller
     {
         $data = $request->validationData();
 //        dd($data);
-        $posts = Post::filter($data)->orderBy('id','desc')->paginate($data['per_page'],'*','page',$data['page']);
+
+        $cacheName = 'posts.' . md5(json_encode($data));
+
+        $posts = Cache::remember($cacheName, now()->addMinutes(100), function () use ($data) {
+            return Post::filter($data)->orderBy('id','desc')->with([
+            'category',
+            'profile.user',
+            'tags',
+            'likedProfiles',
+            'comments',
+            'viewedProfiles'
+        ])->withCount([
+            'likedProfiles',
+            'parentComments',
+            'viewedProfiles'
+        ])->paginate($data['per_page'],'*','page',$data['page']);
+        });
+
         $posts = PostResource::collection($posts);
 
         // Массив с фильтрами и их типами
@@ -50,73 +68,117 @@ class PostController extends Controller
 
     public function show(Post $post): Response
     {
+        $profileId = auth()->check() && auth()->user()->profile
+            ? auth()->user()->profile->id
+            : null;
 
-        // Определяем, есть ли залогиненный пользователь и, соответственно, его профиль
-        $profileId = null;
-        if (auth()->check() && auth()->user()->profile) {
-            $profileId = auth()->user()->profile->id;
-        }
-
-        // Вставляем новую запись в таблицу post_profile_views для каждого запроса
+        // Запись о просмотре
         DB::table('post_profile_views')->insert([
             'post_id'    => $post->id,
-            'profile_id' => $profileId, // если гость, то будет NULL
+            'profile_id' => $profileId,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-//        // Eager load comments и профили с пользователями
-//        $post->load(['comments.profile.user']);
-
-        // Преобразование поста в ресурс
-        $postResource = PostResource::make($post)->resolve();
-
-        // Возвращение данных на фронтенд через Inertia
-        return Inertia::render('Admin/Post/Show', [
-            'post' => $postResource,
+        $post->load([
+            'category',
+            'profile.user', // для ProfileResource
+            'tags',
+            'parentComments',
+        ])->loadCount([
+            'parentComments',
+            'viewedProfiles',
+            'likedProfiles', // добавляем счётчик лайков
         ]);
 
-//        $post = PostResource::make($post)->resolve();
-//        return inertia('Admin/Post/Show', compact('post'));
+        // Если нужно знать «лайкнуто» ли текущим пользователем, добавьте:
+        $post->loadExists([
+            'likedProfiles as is_liked' => function ($query) use ($profileId) {
+                if ($profileId) {
+                    $query->where('profiles.id', $profileId);
+                }
+            }
+        ]);
+
+        $post = PostResource::make($post)->resolve();
+        return inertia('Admin/Post/Show', compact('post'));
     }
 
     public function edit(Post $post): Response
     {
+        // Загружаем необходимые отношения для поста, чтобы избежать дополнительных запросов в ресурсах.
+        $post->load([
+            'category',
+            'profile.user', // для ProfileResource, если используется доступ к пользователю профиля
+            'tags',
+            'likedProfiles',
+        ])->loadCount([
+            'viewedProfiles',
+        ]);
+
         $post = PostResource::make($post)->resolve();
         $categories = CategoryResource::collection(Category::all())->resolve();
-        return inertia('Admin/Post/Edit', compact('post','categories'));
+
+        // обнуляем кеш постов в PostgreSQL, для редис и мемкешед есть tags и удаляется по другому
+        DB::table('cache')->where('key', 'like', 'posts.%')->delete();
+
+        return inertia('Admin/Post/Edit', compact('post', 'categories'));
     }
 
     public function create(): Response
     {
         $categories = CategoryResource::collection(Category::all())->resolve();
+
         return inertia('Admin/Post/Create', compact('categories'));
     }
 
     public function store(StoreRequest $request)
     {
-//        dd($request->validationData());
+        //        dd($request->validationData());
         $data = $request->except('post.image');
-//        dd($data);
+        //        dd($data);
         $post = PostService::store($data);
+
+        // обнуляем кеш постов в PostgreSQL, для редис и мемкешед есть tags и удаляется по другому
+        DB::table('cache')->where('key', 'like', 'posts.%')->delete();
+
         return PostResource::make($post)->resolve();
     }
 
     public function update(UpdateRequest $request, Post $post)
     {
         Gate::authorize('update', $post);
-//        dd($request->validationData());
+
         $data = $request->except('post.image');
-//        dd($data);
         $post = PostService::update($post, $data);
+
+        // Загружаем необходимые отношения и подсчёты, чтобы избежать дополнительных запросов в ресурсах
+        $post->load([
+            'category',
+            'profile.user',  // загружаем профиль вместе с пользователем для ProfileResource
+            'tags',
+            'likedProfiles',
+            'parentComments', // если используете отношение для родительских комментариев
+        ])->loadCount([
+            'viewedProfiles',
+            'parentComments', // если считаете родительские комментарии через loadCount
+        ]);
+
+        // обнуляем кеш постов в PostgreSQL, для редис и мемкешед есть tags и удаляется по другому
+        DB::table('cache')->where('key', 'like', 'posts.%')->delete();
+
         return PostResource::make($post)->resolve();
     }
 
-    public function destroy(Post  $post): JsonResponse
+    public function destroy(Post $post): JsonResponse
     {
         Gate::authorize('delete', $post);
 
         $post->delete();
+
+        // обнуляем кеш постов в PostgreSQL, для редис и мемкешед есть tags и удаляется по другому
+        DB::table('cache')->where('key', 'like', 'posts.%')->delete();
+
         return response()->json([
             'message' => 'The post was successfully deleted.',
         ], HttpResponse::HTTP_OK);
